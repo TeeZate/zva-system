@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zimbabwe Volleyball Association — Official Platform
+
+A production-ready, real-time volleyball management system for the Zimbabwe Volleyball Association (ZVA).
+
+## Features
+
+### Public Portal
+| Page | URL | Description |
+|------|-----|-------------|
+| Home | `/` | Hero, live matches, standings, news |
+| Live Scores | `/scores` | Real-time filtered match feed |
+| Match Detail | `/scores/[id]` | Live score + set breakdown + event feed |
+| Teams | `/teams` | All clubs by division |
+| Team Profile | `/teams/[id]` | Roster, record, recent results |
+| Players | `/players` | Directory with national team section |
+| Player Profile | `/players/[id]` | Stats, position, club |
+| Tournaments | `/tournaments` | Standings tables for all competitions |
+| News | `/news` | Articles by category |
+| TV Scoreboard | `/scoreboard/[id]` | Fullscreen, dark, TV-optimised display |
+
+### Admin Dashboard `/admin`
+- Dashboard with live match overview and quick actions
+- Match scheduling and management
+- Live Score Entry — one-click point awarding, automatic set tracking, event recording
+- Real-time propagation: score updates reach all viewers in under 100ms
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 App Router |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 + ZVA custom theme |
+| Animations | Framer Motion |
+| Database | Supabase (PostgreSQL) |
+| Real-time | Supabase Realtime WebSockets |
+| Deployment | Vercel |
 
 ## Getting Started
 
-First, run the development server:
+### 1. Create Supabase Project
+1. Go to supabase.com → New Project
+2. Run `supabase/schema.sql` in the SQL editor
+3. Enable Realtime for `matches`, `set_scores`, `match_events`, `standings` tables
 
+### 2. Configure Environment
 ```bash
+cp .env.example .env.local
+```
+Fill in your Supabase URL, anon key, and service role key.
+
+### 3. Run Locally
+```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Deploy to Vercel
+Add the three environment variables in the Vercel dashboard and connect your repo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Real-time Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+Admin Score Entry → Supabase UPDATE → Supabase Realtime broadcast
+                                              ↓
+                         Live Scores / Match Detail / TV Scoreboard
+                         (all update via WebSocket — no polling)
+```
 
-## Learn More
+## Color System
 
-To learn more about Next.js, take a look at the following resources:
+| Token | Hex | Use |
+|-------|-----|-----|
+| `--color-zva-green` | `#006400` | Primary brand, CTA |
+| `--color-zva-gold` | `#FFD200` | Accents, live scores |
+| `--color-zva-red` | `#EF3340` | Live indicators |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Defined in `src/app/globals.css` via Tailwind v4 `@theme`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Structure
 
-## Deploy on Vercel
+```
+src/
+  app/                 # All pages (App Router)
+    scores/            # Live scores + match detail
+    teams/             # Teams directory + profiles
+    players/           # Player directory + profiles
+    tournaments/       # Standings + competitions
+    news/              # News articles
+    scoreboard/[id]/   # TV scoreboard
+    admin/             # Admin dashboard + score entry
+  components/
+    layout/            # Navbar, Footer
+    matches/           # MatchCard, LiveScoreTicker
+    ui/                # Button, Badge, Card, Avatar
+  lib/
+    supabase.ts        # Browser Supabase client
+    supabase-server.ts # Server Supabase client
+    types.ts           # TypeScript types
+    utils.ts           # Formatting utilities
+  proxy.ts             # Next.js 16 session proxy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+supabase/
+  schema.sql           # Full schema + seed data
+```

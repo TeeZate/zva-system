@@ -1,26 +1,135 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* ZVA Zimbabwe Brand Colors */
+  --color-zva-green: #006400;
+  --color-zva-green-light: #228B22;
+  --color-zva-green-dark: #004000;
+  --color-zva-gold: #FFD200;
+  --color-zva-gold-light: #FFE44D;
+  --color-zva-gold-dark: #CCA800;
+  --color-zva-red: #EF3340;
+  --color-zva-red-dark: #CC1A2A;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* System tokens */
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-border: #e4e4e7;
+  --color-card: #ffffff;
+  --color-card-foreground: #0a0a0a;
+  --color-primary: #006400;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #FFD200;
+  --color-accent-foreground: #0a0a0a;
+  --color-destructive: #EF3340;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Typography */
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Animations */
+  --animate-pulse-slow: pulse-slow 3s ease-in-out infinite;
+  --animate-score-pop: score-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --animate-fade-in: fade-in 0.4s ease-out;
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-live-pulse: live-pulse 1.5s ease-in-out infinite;
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  @keyframes score-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.75); }
+  }
+  @keyframes score-flash {
+    0% { background-color: transparent; }
+    30% { background-color: rgba(255, 210, 0, 0.35); }
+    100% { background-color: transparent; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Dark mode overrides */
+.dark {
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-muted: #18181b;
+  --color-muted-foreground: #a1a1aa;
+  --color-border: #27272a;
+  --color-card: #18181b;
+  --color-card-foreground: #fafafa;
 }
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -0.025em; }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.zva-container { max-width: 80rem; margin-inline: auto; padding-inline: 1rem; }
+@media (min-width: 640px) { .zva-container { padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .zva-container { padding-inline: 2rem; } }
+
+.zva-gradient {
+  background: linear-gradient(135deg, #006400 0%, #004000 50%, #0A0A0A 100%);
+}
+.zva-gold-gradient {
+  background: linear-gradient(135deg, #FFD200 0%, #CCA800 100%);
+}
+
+.live-dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: #EF3340;
+  animation: var(--animate-live-pulse);
+}
+
+.score-flash { animation: score-flash 0.8s ease-out; }
+.score-pop { animation: var(--animate-score-pop); }
+.fade-in { animation: var(--animate-fade-in); }
+.slide-up { animation: var(--animate-slide-up); }
+
+/* Scoreboard font */
+.score-number {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+.dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #52525b; }
