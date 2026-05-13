@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZVA Digital Management System — Administrator Guide</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:  #1a7a4a;
+    --gold:   #c8a84b;
+    --dark:   #0f1923;
+    --text:   #1a1a2e;
+    --muted:  #5a6475;
+    --light:  #f4f6f9;
+    --border: #d8dde6;
+    --accent: #e8f4ee;
+  }
+
+  html { font-size: 10.5pt; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
+    background: #fff;
+    line-height: 1.65;
+  }
+
+  /* ── Print setup ── */
+  @media print {
+    @page { size: A4; margin: 18mm 20mm 18mm 20mm; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .avoid-break { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    body { font-size: 10pt; }
+  }
+
+  /* ── Screen wrapper ── */
+  .document {
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 0;
+    background: #fff;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    background: var(--dark);
+    color: #fff;
+    padding: 60px 50px 50px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 380px; height: 380px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(26,122,74,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,168,75,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cover-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 60px;
+  }
+  .cover-logo-box {
+    width: 52px; height: 52px;
+    background: var(--green);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px; color: #fff; letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .cover-logo-text { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.3; }
+  .cover-logo-text strong { display: block; color: #fff; font-size: 15px; }
+
+  .cover-main { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .cover-tag {
+    display: inline-block;
+    background: rgba(26,122,74,0.4);
+    border: 1px solid rgba(26,122,74,0.6);
+    color: #5ddb9e;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .cover-title {
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .cover-title span { color: var(--gold); }
+  .cover-subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 40px;
+  }
+
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: linear-gradient(90deg, var(--green), var(--gold));
+    border-radius: 2px;
+    margin-bottom: 36px;
+  }
+
+  .cover-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    max-width: 480px;
+    line-height: 1.75;
+  }
+
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .cover-footer-left { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .cover-footer-left strong { display: block; color: rgba(255,255,255,0.7); font-size: 12px; margin-bottom: 2px; }
+  .cover-version {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ── TOC page ── */
+  .toc-page { padding: 50px 50px 40px; }
+  .toc-section-label {
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 24px;
+  }
+  .toc-title { font-size: 26px; font-weight: 900; color: var(--dark); margin-bottom: 32px; }
+
+  .toc-list { list-style: none; }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text);
+  }
+  .toc-item:last-child { border-bottom: none; }
+  .toc-num {
+    width: 32px;
+    flex-shrink: 0;
+    font-weight: 800;
+    color: var(--green);
+    font-size: 10px;
+  }
+  .toc-label { flex: 1; font-weight: 600; }
+  .toc-sub {
+    font-size: 9.5px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .toc-dot { flex: 1; border-bottom: 1px dotted var(--border); margin: 0 8px; height: 1em; }
+  .toc-pg { font-size: 10px; color: var(--muted); font-weight: 600; }
+
+  .toc-group-header {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 18px 0 6px;
+  }
+
+  /* ── Content pages ── */
+  .content-page { padding: 50px 50px 40px; }
+
+  .chapter-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+  }
+  .chapter-num-box {
+    width: 48px; height: 48px;
+    background: var(--green);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #fff;
+    flex-shrink: 0;
+  }
+  .chapter-header-text {}
+  .chapter-section { font-size: 8.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+  .chapter-title { font-size: 22px; font-weight: 900; color: var(--dark); line-height: 1.2; }
+  .chapter-desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Typography ── */
+  h2 {
+    font-size: 15px; font-weight: 800; color: var(--dark);
+    margin: 26px 0 10px; letter-spacing: -0.2px;
+  }
+  h3 {
+    font-size: 12px; font-weight: 700; color: var(--green);
+    margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  p { margin-bottom: 10px; font-size: 10.5pt; color: #2a2a3e; }
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 5px; font-size: 10.5pt; }
+  li::marker { color: var(--green); }
+
+  strong { color: var(--dark); font-weight: 700; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    font-size: 10pt;
+    display: flex;
+    gap: 12px;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.3; }
+  .callout-body {}
+  .callout-title { font-weight: 800; font-size: 10.5pt; margin-bottom: 3px; }
+
+  .callout-info    { background: #e8f4ee; border-left: 3px solid var(--green); }
+  .callout-warn    { background: #fff8e6; border-left: 3px solid #e8a800; }
+  .callout-tip     { background: #eef3ff; border-left: 3px solid #4a6cf7; }
+  .callout-danger  { background: #ffeef0; border-left: 3px solid #e53e3e; }
+
+  .callout-info  .callout-title { color: var(--green); }
+  .callout-warn  .callout-title { color: #8a6200; }
+  .callout-tip   .callout-title { color: #2a4ccf; }
+  .callout-danger .callout-title { color: #c53030; }
+
+  /* ── Role table ── */
+  .role-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 9.5pt; }
+  .role-table th {
+    background: var(--dark); color: #fff;
+    padding: 9px 12px; text-align: left;
+    font-size: 8.5pt; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .role-table th:first-child { border-radius: 8px 0 0 0; }
+  .role-table th:last-child  { border-radius: 0 8px 0 0; }
+  .role-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .role-table tr:last-child td { border-bottom: none; }
+  .role-table tr:nth-child(even) td { background: var(--light); }
+  .role-table td:first-child { font-weight: 700; color: var(--dark); }
+
+  /* ── Step cards ── */
+  .steps { margin: 14px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-body {}
+  .step-title { font-weight: 700; font-size: 10.5pt; color: var(--dark); margin-bottom: 3px; }
+  .step-desc  { font-size: 10pt; color: #444; line-height: 1.55; }
+
+  /* ── Feature grid ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .feature-card {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .feature-card-icon { font-size: 22px; margin-bottom: 7px; }
+  .feature-card-title { font-weight: 800; font-size: 10.5pt; color: var(--dark); margin-bottom: 4px; }
+  .feature-card-desc  { font-size: 9.5pt; color: var(--muted); line-height: 1.5; }
+
+  /* ── URL / code pills ── */
+  .url {
+    display: inline-block;
+    background: var(--dark);
+    color: #5ddb9e;
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    padding: 2px 8px;
+    border-radius: 4px;
+    word-break: break-all;
+  }
+  code {
+    background: #eef0f5;
+    color: #c04040;
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ── Badge pills ── */
+  .badge {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+  .badge-green  { background: #dcf5ea; color: #1a7a4a; }
+  .badge-gold   { background: #fdf3d9; color: #8a6200; }
+  .badge-blue   { background: #e0eaff; color: #2a4ccf; }
+  .badge-purple { background: #f0e8ff; color: #6b3fbb; }
+  .badge-red    { background: #ffe8e8; color: #c53030; }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; margin: 10px 0; }
+  .checklist li { padding: 5px 0; font-size: 10pt; padding-left: 24px; position: relative; }
+  .checklist li::before {
+    content: '✓';
+    position: absolute; left: 0;
+    color: var(--green); font-weight: 800;
+  }
+
+  /* ── Section divider ── */
+  .section-divider {
+    height: 1px; background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* ── Header running on content pages ── */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+    font-size: 8.5pt;
+    color: var(--muted);
+  }
+  .page-header-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 700; color: var(--dark); font-size: 9pt;
+  }
+  .page-header-logo span {
+    width: 22px; height: 22px;
+    background: var(--green);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 7pt; font-weight: 900;
+  }
+
+  /* ── Workflow diagram (text-based) ── */
+  .workflow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 18px 0;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .workflow-step {
+    background: var(--accent);
+    border: 1px solid #b8ddc8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--green);
+    text-align: center;
+    min-width: 90px;
+  }
+  .workflow-arrow {
+    font-size: 16px;
+    color: var(--muted);
+    padding: 0 4px;
+  }
+
+  /* ── Print helper ── */
+  .print-btn {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(26,122,74,0.4);
+    z-index: 1000;
+  }
+  .print-btn:hover { background: #156040; }
+  @media print { .print-btn { display: none; } }
+</style>
+</head>
+<body>
+<div class="document">
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- COVER PAGE                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">
+    <div class="cover-logo-box">ZVA</div>
+    <div class="cover-logo-text">
+      <strong>Zimbabwe Volleyball Association</strong>
+      Digital Management System
+    </div>
+  </div>
+
+  <div class="cover-main">
+    <div class="cover-tag">Administrator Reference Guide</div>
+    <div class="cover-title">
+      ZVA System<br>
+      <span>Operations Manual</span>
+    </div>
+    <div class="cover-subtitle">Complete guide for ZVA administrators, team officials, and statisticians</div>
+    <div class="cover-divider"></div>
+    <div class="cover-desc">
+      This document covers every feature of the ZVA Digital Management System — from publishing
+      news and managing fixtures, to live scoring, COURT stat collection, team O2 registration,
+      and system monitoring. Keep it as your day-to-day reference.
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div class="cover-footer-left">
+      <strong>Zimbabwe Volleyball Association</strong>
+      Confidential — For Authorised Administrators Only
+    </div>
+    <div class="cover-version">Version 1.0 &nbsp;·&nbsp; May 2026</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="toc-page page-break">
+  <div class="toc-section-label">Contents</div>
+  <div class="toc-title">Table of Contents</div>
+
+  <ul class="toc-list">
+    <div class="toc-group-header">Getting Started</div>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">1.</span>
+      <div style="flex:1">
+        <div class="toc-label">System Overview</div>
+        <div class="toc-sub">What the ZVA system is and how it is structured</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">3</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">2.</span>
+      <div style="flex:1">
+        <div class="toc-label">Roles &amp; Permissions</div>
+        <div class="toc-sub">Super Admin, Admin, Team Admin, Statistician — who can do what</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">4</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">3.</span>
+      <div style="flex:1">
+        <div class="toc-label">Logging In &amp; Admin Panel Navigation</div>
+        <div class="toc-sub">Accessing the system and finding your way around</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">5</span>
+    </li>
+
+    <div class="toc-group-header">Core Administration</div>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">4.</span>
+      <div style="flex:1">
+        <div class="toc-label">Managing Matches &amp; Fixtures</div>
+        <div class="toc-sub">Scheduling matches, entering results, managing tournaments</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">6</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">5.</span>
+      <div style="flex:1">
+        <div class="toc-label">Live Score Entry</div>
+        <div class="toc-sub">Updating scores in real time so the public scoreboard refreshes instantly</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">8</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">6.</span>
+      <div style="flex:1">
+        <div class="toc-label">COURT Scout — Live Stat Collection</div>
+        <div class="toc-sub">How statisticians record actions and sync to the live scoreboard</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">10</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">7.</span>
+      <div style="flex:1">
+        <div class="toc-label">Teams &amp; Players</div>
+        <div class="toc-sub">Managing team rosters, player profiles, and national team flags</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">12</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">8.</span>
+      <div style="flex:1">
+        <div class="toc-label">News &amp; Announcements</div>
+        <div class="toc-sub">Publishing articles, match reports, and transfer news</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">13</span>
+    </li>
+
+    <div class="toc-group-header">Team &amp; User Management</div>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">9.</span>
+      <div style="flex:1">
+        <div class="toc-label">Team Portal — O2 Form Uploads</div>
+        <div class="toc-sub">How team admins submit FIVB player registration documents</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">14</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">10.</span>
+      <div style="flex:1">
+        <div class="toc-label">Managing Admin Accounts</div>
+        <div class="toc-sub">Creating, disabling, and resetting passwords for all admin users</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">15</span>
+    </li>
+
+    <div class="toc-group-header">System &amp; Troubleshooting</div>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">11.</span>
+      <div style="flex:1">
+        <div class="toc-label">System Monitor &amp; Health Dashboard</div>
+        <div class="toc-sub">Checking database, storage, and Realtime service status</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">16</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">12.</span>
+      <div style="flex:1">
+        <div class="toc-label">The Public Website</div>
+        <div class="toc-sub">What visitors see and how data flows from admin to public pages</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">17</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">13.</span>
+      <div style="flex:1">
+        <div class="toc-label">Troubleshooting &amp; FAQs</div>
+        <div class="toc-sub">Common issues and how to resolve them</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">18</span>
+    </li>
+
+    <li class="toc-item avoid-break">
+      <span class="toc-num">14.</span>
+      <div style="flex:1">
+        <div class="toc-label">Quick Reference Card</div>
+        <div class="toc-sub">All URLs, roles, and key actions at a glance</div>
+      </div>
+      <span class="toc-dot"></span>
+      <span class="toc-pg">19</span>
+    </li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 1 — SYSTEM OVERVIEW                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 1 · System Overview</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">1</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter One</div>
+      <div class="chapter-title">System Overview</div>
+      <div class="chapter-desc">What the ZVA Digital Management System is and how it is structured</div>
+    </div>
+  </div>
+
+  <p>
+    The <strong>ZVA Digital Management System</strong> is a centralised web platform that manages all
+    aspects of Zimbabwe Volleyball Association's operations — from league fixtures and live scores to
+    player registration, news publishing, and match statistics.
+  </p>
+  <p>
+    The system runs entirely in the cloud. There is nothing to install. Any administrator with an
+    internet connection and a modern browser can access it from a laptop, tablet, or smartphone.
+  </p>
+
+  <h2>System URL</h2>
+  <p>The system is accessible at:</p>
+  <p><span class="url">https://zva-system.up.railway.app</span></p>
+  <p>The public website and the administrator panel share the same address. Administrators access their
+  panel by navigating to <span class="url">/admin</span>.</p>
+
+  <h2>Two Parts of the System</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card avoid-break">
+      <div class="feature-card-icon">🌐</div>
+      <div class="feature-card-title">Public Website</div>
+      <div class="feature-card-desc">
+        Visible to everyone — fans, media, players, and sponsors. Shows fixtures, live scores,
+        standings, player profiles, news, and tournament results. No login required.
+      </div>
+    </div>
+    <div class="feature-card avoid-break">
+      <div class="feature-card-icon">🔐</div>
+      <div class="feature-card-title">Administrator Panel</div>
+      <div class="feature-card-desc">
+        Accessible only to authorised ZVA staff. Used to enter scores, manage teams, publish
+        news, handle O2 registrations, and monitor the system. Login required.
+      </div>
+    </div>
+  </div>
+
+  <h2>How Data Flows</h2>
+  <div class="workflow avoid-break">
+    <div class="workflow-step">Admin enters data</div>
+    <div class="workflow-arrow">→</div>
+    <div class="workflow-step">Saved to database</div>
+    <div class="workflow-arrow">→</div>
+    <div class="workflow-step">Public site updates instantly</div>
+    <div class="workflow-arrow">→</div>
+    <div class="workflow-step">Fans see it live</div>
+  </div>
+  <p>
+    All data is stored in a secure cloud database (Supabase). When an admin updates a score or
+    publishes an article, the change appears on the public website within seconds — no manual
+    refresh or file upload is required.
+  </p>
+
+  <h2>Key Features at a Glance</h2>
+  <ul class="checklist">
+    <li>Live score entry with real-time scoreboard display — usable on a TV or projector courtside</li>
+    <li>COURT scouting app for statisticians — records every action per player, synced live</li>
+    <li>Full fixture management for Premier League, ZVA Cup, Junior Championship, and more</li>
+    <li>Automatic standings calculation and league tables</li>
+    <li>Player database with national team flags and career statistics</li>
+    <li>News publishing with categories, featured articles, and SEO-ready pages</li>
+    <li>O2 form upload portal for team administrators</li>
+    <li>System health monitor so technical issues are spotted immediately</li>
+  </ul>
+
+  <div class="callout callout-info avoid-break">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <div class="callout-title">Built for reliability</div>
+      The system is hosted on Railway (cloud server) with automatic deployments.
+      The database is hosted on Supabase with daily backups. If you ever see a technical error,
+      check the System Monitor page first — it will tell you exactly which service is affected.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 2 — ROLES & PERMISSIONS                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 2 · Roles &amp; Permissions</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">2</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Two</div>
+      <div class="chapter-title">Roles &amp; Permissions</div>
+      <div class="chapter-desc">There are four access levels — each person only sees what they need</div>
+    </div>
+  </div>
+
+  <p>
+    The ZVA system uses a <strong>role-based access</strong> model. When an administrator logs in, the
+    system automatically detects their role and shows only the pages they are permitted to use.
+    There is no way for a team admin to accidentally access super admin functions.
+  </p>
+
+  <table class="role-table avoid-break">
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Who holds it</th>
+        <th>What they can do</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-gold">Super Admin</span></td>
+        <td>ZVA technical officer / secretary general</td>
+        <td>Everything — full system access including creating/disabling other admin accounts, system monitor, all content management</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">Admin</span></td>
+        <td>ZVA competition managers</td>
+        <td>Manage matches, live scoring, teams, players, tournaments, news. Cannot manage other admin accounts or view system health</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">Team Admin</span></td>
+        <td>Club registrars / team managers</td>
+        <td>Access their own team dashboard only. Can upload O2 registration forms for their team. Cannot see any other team's data</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">Statistician</span></td>
+        <td>Match statisticians / scorers</td>
+        <td>Access the COURT scout app only. Can select a match and record live statistics. Cannot edit fixtures or publish news</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn avoid-break">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Only Super Admins can create other admin accounts</div>
+      If a team admin or statistician needs their password reset or account disabled, only a
+      Super Admin can do this. Keep the Super Admin credentials in a secure place.
+    </div>
+  </div>
+
+  <h2>What Happens When Each Role Logs In</h2>
+
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">SA</div>
+      <div class="step-body">
+        <div class="step-title">Super Admin / Admin — Full Admin Panel</div>
+        <div class="step-desc">Sees the complete sidebar: Dashboard, Matches, Live Scoring, COURT Scout,
+        Teams, Players, Tournaments, News, Admin Users, and System Monitor.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">TA</div>
+      <div class="step-body">
+        <div class="step-title">Team Admin — Team Portal Only</div>
+        <div class="step-desc">After login they are automatically redirected to <code>/admin/team</code>.
+        They see their team dashboard and O2 forms page. There is no way to navigate to other teams
+        or admin functions.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">ST</div>
+      <div class="step-body">
+        <div class="step-title">Statistician — Scout App Only</div>
+        <div class="step-desc">After login they are automatically redirected to <code>/admin/scout</code>.
+        They see a list of upcoming matches and can open the COURT app to record live stats.
+        No other pages are accessible.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 3 — LOGGING IN                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 3 · Logging In</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">3</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Three</div>
+      <div class="chapter-title">Logging In &amp; Navigation</div>
+      <div class="chapter-desc">How to access the admin panel and find your way around</div>
+    </div>
+  </div>
+
+  <h2>Accessing the Admin Panel</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Open your browser</div>
+        <div class="step-desc">Go to <span class="url">https://zva-system.up.railway.app/admin/login</span>.
+        Use Chrome, Edge, Firefox, or Safari. The system works on desktop and mobile.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Enter your credentials</div>
+        <div class="step-desc">Type your email address and password. These are issued to you by the
+        Super Admin. If you have not received credentials, contact the ZVA technical officer.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">You are redirected automatically</div>
+        <div class="step-desc">Based on your role, you will land on the correct page immediately.
+        Super Admins and Admins go to the Dashboard. Team Admins go to their Team Portal.
+        Statisticians go to the COURT Scout app.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip avoid-break">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Bookmark the admin panel</div>
+      Save <span class="url">https://zva-system.up.railway.app/admin</span> as a bookmark on your
+      device. The system will remember your login session for several days so you will not need to
+      sign in each time.
+    </div>
+  </div>
+
+  <h2>Admin Panel Sidebar Navigation</h2>
+  <p>The left sidebar is your main navigation. Here is what each section does:</p>
+
+  <table class="role-table avoid-break">
+    <thead>
+      <tr><th>Sidebar Item</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dashboard</td><td>Overview — live matches, recent stats, quick links</td></tr>
+      <tr><td>Matches</td><td>View, create, and edit all fixtures</td></tr>
+      <tr><td>Live Scoring</td><td>Enter scores point-by-point for live matches</td></tr>
+      <tr><td>COURT Scout</td><td>Open the stat-collection app for statisticians</td></tr>
+      <tr><td>Teams</td><td>Manage all clubs — details, colours, home venue</td></tr>
+      <tr><td>Players</td><td>Full player database with positions and stats</td></tr>
+      <tr><td>Tournaments</td><td>Create and manage competitions</td></tr>
+      <tr><td>News</td><td>Publish articles and announcements</td></tr>
+      <tr><td>Admin Users</td><td>Create and manage all admin accounts (Super Admin only)</td></tr>
+      <tr><td>System Monitor</td><td>Health dashboard for database and services (Super Admin only)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Signing Out</h2>
+  <p>
+    Click <strong>Sign Out</strong> at the bottom of the sidebar. Always sign out when using a shared
+    or public computer. Your session expires automatically after a period of inactivity.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 4 — MATCHES & FIXTURES                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 4 · Managing Matches</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">4</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Four</div>
+      <div class="chapter-title">Managing Matches &amp; Fixtures</div>
+      <div class="chapter-desc">Scheduling matches, recording results, and managing tournaments</div>
+    </div>
+  </div>
+
+  <h2>Viewing All Fixtures</h2>
+  <p>
+    Go to <strong>Matches</strong> in the sidebar. You will see a list of all fixtures — past,
+    upcoming, and live — with filters by tournament, status, and date. Each match card shows
+    both teams, the scheduled time, venue, and current status.
+  </p>
+
+  <h2>Scheduling a New Match</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Click "New Match"</div>
+        <div class="step-desc">The button is at the top right of the Matches page.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Fill in the match details</div>
+        <div class="step-desc">Select the tournament, home team, away team, venue, date, and time.
+        All teams and venues must already exist in the system before you can assign them.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Set status to "Scheduled"</div>
+        <div class="step-desc">The match will appear on the public fixtures page immediately after saving.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Match Status Values</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Status</th><th>Meaning</th><th>Public display</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">Scheduled</span></td><td>Match is in the future, not yet started</td><td>Shown in fixtures with date/time</td></tr>
+      <tr><td><span class="badge badge-red">Live</span></td><td>Match is currently in progress</td><td>Shown with live score and pulsing indicator</td></tr>
+      <tr><td><span class="badge badge-green">Finished</span></td><td>Match has been completed</td><td>Shows final score and set breakdown</td></tr>
+      <tr><td><td>Postponed / Cancelled</td><td>Match will not take place as scheduled</td><td>Shown with status label, no score</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Entering a Final Result Manually</h2>
+  <p>
+    If live scoring was not used during the match, you can enter the result after the fact.
+    Open the match from the Matches page, edit the set scores directly, and set the status
+    to <strong>Finished</strong>. The standings and league table will update automatically.
+  </p>
+
+  <h2>Managing Tournaments</h2>
+  <p>
+    Go to <strong>Tournaments</strong> in the sidebar to create and manage competitions.
+    Each tournament has a name, division (Premier League, ZVA Cup, etc.), season dates,
+    and status. Matches are linked to a tournament — you must create the tournament first
+    before scheduling matches inside it.
+  </p>
+
+  <div class="callout callout-info avoid-break">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <div class="callout-title">Standings update automatically</div>
+      When you mark a match as Finished with a final score, the standings table for that
+      tournament recalculates automatically — wins, losses, sets ratio, and league points
+      are all updated. You do not need to update standings separately.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 5 — LIVE SCORING                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 5 · Live Score Entry</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">5</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Five</div>
+      <div class="chapter-title">Live Score Entry</div>
+      <div class="chapter-desc">Update scores in real time — the public scoreboard refreshes instantly for all viewers</div>
+    </div>
+  </div>
+
+  <p>
+    The ZVA system includes a real-time scoring interface. When an admin enters a score update,
+    it is broadcast immediately to every person viewing the public scoreboard — including on TV
+    screens and projectors at the venue. No page refresh is needed on any device.
+  </p>
+
+  <h2>Starting a Live Match</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Go to Live Scoring in the sidebar</div>
+        <div class="step-desc">You will see two sections: "Currently Live" and "Scheduled — Ready to Start".</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Click "Start Match" next to the fixture</div>
+        <div class="step-desc">This opens the score entry screen and changes the match status
+        to Live on the public website.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Use the score entry controls</div>
+        <div class="step-desc">Tap the <strong>+1</strong> button for the team that won the point.
+        The score updates on the scoreboard in under one second for everyone watching.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">End each set</div>
+        <div class="step-desc">When a set finishes, click <strong>End Set</strong>. The scores reset
+        to zero and the set counter advances. Set scores are saved and shown in the history.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Match concludes automatically</div>
+        <div class="step-desc">When one team reaches 3 set wins (best of 5) the system marks the
+        match as finished. The final result is saved and the public scoreboard shows the completed score.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>The Public TV Scoreboard</h2>
+  <p>
+    Every live match has a dedicated full-screen scoreboard page at:
+  </p>
+  <p><span class="url">https://zva-system.up.railway.app/scoreboard/[match-id]</span></p>
+  <p>
+    Open this URL on any screen connected to a TV or projector at the venue. It displays team names,
+    current set scores, the score in large text, and a live indicator. It updates automatically —
+    no one needs to touch the TV screen.
+  </p>
+
+  <div class="callout callout-tip avoid-break">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Using both Live Scoring and COURT Scout together</div>
+      If a statistician is using the COURT Scout app for the same match, they do not need to be
+      coordinated with the Live Scoring admin. COURT Scout sends score updates automatically
+      every time a point is awarded — so the scoreboard stays correct from both sources.
+      However, you should use one method at a time to avoid duplicate updates.
+    </div>
+  </div>
+
+  <h2>Correcting a Score Mistake</h2>
+  <p>
+    If a score is entered incorrectly, go to the match in the <strong>Matches</strong> page,
+    click Edit, and manually adjust the scores. The scoreboard will update within seconds.
+    There is no need to end and restart the match.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 6 — COURT SCOUT                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 6 · COURT Scout</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">6</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Six</div>
+      <div class="chapter-title">COURT Scout — Live Stat Collection</div>
+      <div class="chapter-desc">How statisticians record per-player actions and sync data to the live scoreboard</div>
+    </div>
+  </div>
+
+  <p>
+    <strong>COURT</strong> is the ZVA's integrated scouting and statistics application. It runs directly
+    inside the ZVA admin panel and is designed to be used courtside on a tablet or laptop.
+    Statisticians record every action — attacks, serves, blocks, digs — for each player. The scores
+    sync to the live scoreboard automatically.
+  </p>
+
+  <h2>Who Uses COURT Scout</h2>
+  <p>
+    Users with the <span class="badge badge-purple">Statistician</span> role are taken directly to
+    COURT Scout when they log in. Admins and Super Admins can also access it via the sidebar.
+  </p>
+
+  <h2>Starting a Scouting Session</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Open COURT Scout in the admin panel</div>
+        <div class="step-desc">Click <strong>COURT Scout</strong> in the sidebar. You will see a list
+        of all scheduled and live matches.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Select the match you are recording</div>
+        <div class="step-desc">Click the match card. The COURT app opens in an embedded panel below,
+        already connected to that match. The ZVA badge at the top of COURT will show
+        <strong>"ZVA READY"</strong> in green.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Click "LOAD ROSTER"</div>
+        <div class="step-desc">This imports the team names and player lists from the ZVA database
+        into the COURT app automatically. You do not need to type in any names.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Click "Start Match" in COURT</div>
+        <div class="step-desc">The RECORD tab opens. You are now ready to record stats.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Recording Statistics</h2>
+  <p>On the RECORD screen:</p>
+  <ol>
+    <li><strong>Select a player</strong> from the chip list at the top (home team left, away team right)</li>
+    <li><strong>Select the action</strong> — Attack, Serve, Block, Dig, Receive, Set, etc.</li>
+    <li>For attacks and serves, <strong>select the type</strong> (e.g. Jump Serve, Pipe, etc.)</li>
+    <li><strong>Select the outcome</strong> — Good ✓, OK ~, or Error ✗</li>
+    <li>Click <strong>LOG ACTION</strong> — the event is saved and synced</li>
+  </ol>
+
+  <p>To award a point manually, use the <strong>+1 HOME</strong> / <strong>+1 AWAY</strong> buttons
+  at the top of the screen. This is the primary way scores advance.</p>
+
+  <h2>Ending a Set and Concluding the Match</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Action</th><th>How</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>End a set</td>
+        <td>Click <strong>END SET</strong></td>
+        <td>Confirms set result via a modal. Scores reset. ZVA scoreboard updates. Set history is saved.</td>
+      </tr>
+      <tr>
+        <td>Match won naturally</td>
+        <td>Automatic when a team reaches 3 set wins</td>
+        <td>A 🏆 Match Complete overlay appears showing the final result. The match is marked Finished in the ZVA database.</td>
+      </tr>
+      <tr>
+        <td>End match early</td>
+        <td>Click the red <strong>END MATCH</strong> button</td>
+        <td>Use for forfeits or retirements. Confirms via modal then completes the match with the current set tally.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info avoid-break">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <div class="callout-title">COURT works offline too</div>
+      COURT stores all events on the device locally (using the browser's built-in storage).
+      If the internet drops mid-match, stat recording continues uninterrupted. However,
+      live score updates to the ZVA scoreboard will pause until the connection is restored —
+      these are sent automatically once the connection returns.
+    </div>
+  </div>
+
+  <h2>Viewing and Exporting Statistics</h2>
+  <p>
+    The <strong>LOG</strong> tab in COURT shows a full event-by-event breakdown, stat summary cards,
+    and a per-player performance table. To export data for FIVB reporting, click the
+    <strong>↓ CSV</strong> button — this downloads a spreadsheet of all recorded actions.
+  </p>
+
+  <h2>Full-Screen Mode</h2>
+  <p>
+    For courtside use on a dedicated tablet, click <strong>Full Screen</strong> at the top of the
+    Scout page. This hides the admin panel and shows only COURT — ideal for a statistician
+    who only needs the scouting interface.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 7 — TEAMS & PLAYERS                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 7 · Teams &amp; Players</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">7</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Seven</div>
+      <div class="chapter-title">Teams &amp; Players</div>
+      <div class="chapter-desc">Managing club profiles, rosters, and the national team</div>
+    </div>
+  </div>
+
+  <h2>Managing Teams</h2>
+  <p>
+    Go to <strong>Teams</strong> in the sidebar to view and manage all registered clubs.
+    Each team record contains:
+  </p>
+  <ul>
+    <li><strong>Name and short name</strong> (e.g. "Harare City Volleyball Club" / "HARARE")</li>
+    <li><strong>Division</strong> — Premier League, Division One, Women's, Junior, etc.</li>
+    <li><strong>Province and city</strong></li>
+    <li><strong>Home venue</strong> — linked to the venues database</li>
+    <li><strong>Coach name, colours, and founding year</strong></li>
+    <li><strong>Logo</strong> — upload via the team edit page</li>
+  </ul>
+
+  <div class="callout callout-warn avoid-break">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Add teams before scheduling matches</div>
+      You cannot create a fixture without both teams already existing in the system.
+      Always add new clubs to the Teams database before the season starts.
+    </div>
+  </div>
+
+  <h2>Managing Players</h2>
+  <p>
+    Go to <strong>Players</strong> in the sidebar. Each player profile contains:
+  </p>
+  <ul>
+    <li>First and last name, jersey number, position</li>
+    <li>Date of birth, height, nationality</li>
+    <li>Team assignment</li>
+    <li>National team flag (tick this for players who represent Zimbabwe nationally)</li>
+    <li>Career statistics — points, aces, blocks (used for Hall of Fame displays)</li>
+    <li>Player photo (uploaded URL)</li>
+  </ul>
+
+  <h3>Player Positions</h3>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Full Name</th><th>Short Code</th></tr></thead>
+    <tbody>
+      <tr><td>Setter</td><td>S</td></tr>
+      <tr><td>Outside Hitter</td><td>OH</td></tr>
+      <tr><td>Middle Blocker</td><td>MB</td></tr>
+      <tr><td>Opposite</td><td>OPP</td></tr>
+      <tr><td>Libero</td><td>LIB</td></tr>
+      <tr><td>Defensive Specialist</td><td>DS</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Team Rosters in COURT Scout</h2>
+  <p>
+    When a statistician selects a match in COURT Scout and clicks <strong>Load Roster</strong>,
+    the system automatically pulls the players from both teams' rosters in the database.
+    This means keeping the Players database up to date is essential for accurate stat collection.
+    If a player is not in the system, they cannot be tracked individually in COURT.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 8 — NEWS                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 8 · News &amp; Announcements</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">8</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Eight</div>
+      <div class="chapter-title">News &amp; Announcements</div>
+      <div class="chapter-desc">Publishing articles, match reports, transfer news, and official announcements</div>
+    </div>
+  </div>
+
+  <p>
+    The ZVA system includes a full news publishing platform. Articles appear on the public website
+    under the News section and are visible to everyone. There is no character limit on article content.
+  </p>
+
+  <h2>Publishing a New Article</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Go to News → New Article</div>
+        <div class="step-desc">Click <strong>News</strong> in the sidebar then <strong>New Article</strong> at the top right.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Fill in the article details</div>
+        <div class="step-desc">
+          <ul>
+            <li><strong>Title</strong> — the headline shown on the website</li>
+            <li><strong>Slug</strong> — the URL identifier (auto-generated from the title, e.g. <code>zva-season-preview-2026</code>)</li>
+            <li><strong>Category</strong> — Match Report, Announcement, Transfer, National Team, or General</li>
+            <li><strong>Excerpt</strong> — a short summary shown on the news listing page (2–3 sentences)</li>
+            <li><strong>Content</strong> — the full article body</li>
+            <li><strong>Thumbnail URL</strong> — link to a cover image</li>
+            <li><strong>Tags</strong> — keywords for filtering (e.g. "premier-league", "harare")</li>
+            <li><strong>Featured</strong> — tick this to pin the article at the top of the news page</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Click Publish</div>
+        <div class="step-desc">The article appears on the public website immediately at
+        <span class="url">/news/[slug]</span>.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Article Categories</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Category</th><th>Use for</th></tr></thead>
+    <tbody>
+      <tr><td>Match Report</td><td>Post-match write-ups covering key moments and standout players</td></tr>
+      <tr><td>Announcement</td><td>Official ZVA statements, rule changes, season calendars</td></tr>
+      <tr><td>Transfer</td><td>Player signings, club moves, loan deals</td></tr>
+      <tr><td>National Team</td><td>Zimbabwe national team news, FIVB events, training camps</td></tr>
+      <tr><td>General</td><td>All other volleyball news</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-tip avoid-break">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Only one featured article at a time</div>
+      Mark one article as Featured to pin it at the top of the news page with a large hero banner.
+      If you feature a new article, unfeature the previous one to keep the layout clean.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 9 — TEAM PORTAL / O2 UPLOADS                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 9 · Team Portal &amp; O2 Forms</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">9</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Nine</div>
+      <div class="chapter-title">Team Portal — O2 Form Uploads</div>
+      <div class="chapter-desc">How clubs submit FIVB player registration documents digitally</div>
+    </div>
+  </div>
+
+  <p>
+    The <strong>O2 form</strong> is the official FIVB document used to register players for international
+    and national competition. The ZVA system allows team administrators to upload their O2 forms
+    digitally, replacing the need to deliver paper copies to the ZVA office.
+  </p>
+
+  <h2>What Team Admins See</h2>
+  <p>
+    When a Team Admin logs in, they go directly to their <strong>Team Portal</strong>. They see:
+  </p>
+  <ul>
+    <li>Their club's profile card (name, division, coach)</li>
+    <li>A summary of their O2 submissions (pending, approved, rejected)</li>
+    <li>A list of all previous uploads with status badges</li>
+    <li>A link to upload a new O2 form</li>
+  </ul>
+
+  <h2>Uploading an O2 Form (Team Admin)</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Go to O2 Forms in the Team Portal sidebar</div>
+        <div class="step-desc">Click <strong>O2 Forms</strong> in the left nav.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Drag and drop or select the file</div>
+        <div class="step-desc">Accepted formats: PDF, JPG, PNG, WEBP. Maximum file size: 10 MB.
+        Scan quality must be sufficient for ZVA staff to read all fields clearly.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Select the season and enter the player count</div>
+        <div class="step-desc">Choose the relevant season (e.g. 2025/2026) and enter how many
+        players are listed on this O2 form.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Click Submit</div>
+        <div class="step-desc">The form is uploaded and its status is set to <strong>Pending</strong>.
+        A ZVA admin will review it and update the status to Approved or Rejected.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>O2 Submission Statuses</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-gold">Pending</span></td><td>Uploaded, awaiting ZVA review</td></tr>
+      <tr><td><span class="badge badge-green">Approved</span></td><td>ZVA has accepted the registration</td></tr>
+      <tr><td><span class="badge badge-red">Rejected</span></td><td>ZVA has rejected the form — reviewer notes will explain why. Re-upload a corrected version.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn avoid-break">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Reviewing O2 forms (Super Admin / Admin)</div>
+      ZVA staff review O2 submissions from within the admin panel. Go to <strong>Teams → [Team Name] → O2 Uploads</strong>
+      to see all pending submissions. Open the file, review it, then set the status to Approved or
+      Rejected and add notes if needed.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 10 — MANAGING ADMIN ACCOUNTS                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 10 · Admin Accounts</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">10</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Ten</div>
+      <div class="chapter-title">Managing Admin Accounts</div>
+      <div class="chapter-desc">Creating, disabling, and resetting passwords — Super Admin only</div>
+    </div>
+  </div>
+
+  <p>
+    All admin account management is done from <strong>Admin Users</strong> in the sidebar.
+    Only Super Admins can access this page.
+  </p>
+
+  <h2>Creating a New Admin Account</h2>
+  <div class="steps">
+    <div class="step avoid-break">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Click "Add Admin"</div>
+        <div class="step-desc">A modal dialog opens.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Enter their email address</div>
+        <div class="step-desc">Use the person's official email. An invitation will be sent to this address.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Select their role</div>
+        <div class="step-desc">Choose from Team Admin, Statistician (COURT Scout), or Super Admin.
+        For Team Admins, also select which club they manage.</div>
+      </div>
+    </div>
+    <div class="step avoid-break">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Click Send Invite</div>
+        <div class="step-desc">The person receives an email with a link to set their own password.
+        Once they complete registration, their account is active.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Resetting a Password</h2>
+  <p>
+    On the Admin Users page, find the person's row and click the <strong>key icon</strong>.
+    This sends a password reset email to their registered address. They click the link in
+    the email and set a new password.
+  </p>
+
+  <h2>Disabling an Account</h2>
+  <p>
+    Click the <strong>shield icon</strong> next to the user's name to disable their account.
+    A disabled account cannot log in — the person is locked out immediately. This is the
+    correct action when someone leaves the organisation. You can re-enable the account at any
+    time by clicking the same button.
+  </p>
+
+  <div class="callout callout-danger avoid-break">
+    <div class="callout-icon">🔒</div>
+    <div class="callout-body">
+      <div class="callout-title">Disable accounts promptly when staff change</div>
+      When a team manager changes, a statistician leaves, or any admin departs, disable their
+      account immediately. Do not wait. An active account belonging to a former staff member
+      is a security risk.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 11 — SYSTEM MONITOR                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 11 · System Monitor</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">11</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Eleven</div>
+      <div class="chapter-title">System Monitor &amp; Health Dashboard</div>
+      <div class="chapter-desc">Checking the health of all services — Super Admin only</div>
+    </div>
+  </div>
+
+  <p>
+    The <strong>System Monitor</strong> (accessible via the sidebar under the System section)
+    gives a live view of all backend services. It is the first place to check whenever
+    something seems slow or broken.
+  </p>
+
+  <h2>Health Checks Displayed</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Service</th><th>What it checks</th></tr></thead>
+    <tbody>
+      <tr><td>Database</td><td>Can the system read from Supabase? Measured in milliseconds.</td></tr>
+      <tr><td>Authentication</td><td>Is the login service responding correctly?</td></tr>
+      <tr><td>Storage</td><td>Is the file storage system (for O2 forms) available?</td></tr>
+      <tr><td>Realtime</td><td>Is the live score broadcast service working?</td></tr>
+      <tr><td>Environment</td><td>Are all required configuration keys present on the server?</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Status Indicators</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Indicator</th><th>Meaning</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-green">OK</span></td><td>Service is healthy and responding normally</td><td>None required</td></tr>
+      <tr><td><span class="badge badge-gold">WARN</span></td><td>Service is responding but slower than expected</td><td>Monitor — may resolve itself. Contact support if it persists.</td></tr>
+      <tr><td><span class="badge badge-red">ERROR</span></td><td>Service is not responding or has failed</td><td>Contact your technical support contact immediately</td></tr>
+    </tbody>
+  </table>
+
+  <h2>System Event Log</h2>
+  <p>
+    Below the health checks, a log shows the last 50 system events — including failed login attempts,
+    upload errors, and API failures. This helps diagnose issues like a team admin repeatedly failing
+    to log in (possible password issue) or frequent upload failures (possible connectivity problem
+    at their end).
+  </p>
+
+  <div class="callout callout-tip avoid-break">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Refresh button</div>
+      The System Monitor page has a <strong>Refresh</strong> button in the top right. Click it to
+      re-run all health checks. The page does not auto-refresh — you must click Refresh each time
+      you want updated readings.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 12 — PUBLIC WEBSITE                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 12 · Public Website</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">12</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Twelve</div>
+      <div class="chapter-title">The Public Website</div>
+      <div class="chapter-desc">What the public sees and how admin actions appear instantly</div>
+    </div>
+  </div>
+
+  <p>
+    The public website at <span class="url">https://zva-system.up.railway.app</span> requires no login
+    and is accessible to anyone — fans, media, players, sponsors, and FIVB officials.
+    Everything on it is driven by the data entered in the admin panel.
+  </p>
+
+  <h2>Public Pages</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Page</th><th>URL</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>Home</td><td><code>/</code></td><td>Featured news, upcoming fixtures, league highlights</td></tr>
+      <tr><td>Scores</td><td><code>/scores</code></td><td>All results — filter by tournament or date</td></tr>
+      <tr><td>Live Scoreboard</td><td><code>/scoreboard/[id]</code></td><td>Full-screen live score for a specific match — for TV/projector</td></tr>
+      <tr><td>Teams</td><td><code>/teams</code></td><td>All clubs with details and rosters</td></tr>
+      <tr><td>Players</td><td><code>/players</code></td><td>Full player database with search and filter</td></tr>
+      <tr><td>Tournaments</td><td><code>/tournaments</code></td><td>All competitions with standings and fixtures</td></tr>
+      <tr><td>News</td><td><code>/news</code></td><td>All published articles</td></tr>
+      <tr><td>News Article</td><td><code>/news/[slug]</code></td><td>Individual article with full content</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How Fast Do Updates Appear?</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Action</th><th>Public website update</th></tr></thead>
+    <tbody>
+      <tr><td>Score update during live match</td><td>Under 1 second (Supabase Realtime broadcast)</td></tr>
+      <tr><td>Publishing a news article</td><td>Immediately</td></tr>
+      <tr><td>Scheduling a new match</td><td>Immediately</td></tr>
+      <tr><td>Adding a player or team</td><td>Immediately</td></tr>
+      <tr><td>Updating standings</td><td>Immediately after match result is saved</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 13 — TROUBLESHOOTING                          -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 13 · Troubleshooting</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">13</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Thirteen</div>
+      <div class="chapter-title">Troubleshooting &amp; FAQs</div>
+      <div class="chapter-desc">Common issues and how to resolve them quickly</div>
+    </div>
+  </div>
+
+  <table class="role-table">
+    <thead><tr><th>Problem</th><th>Likely cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr class="avoid-break">
+        <td>Cannot log in — "Invalid credentials"</td>
+        <td>Wrong password or email</td>
+        <td>Double-check the email. If forgotten, ask a Super Admin to send a password reset email.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>Cannot log in — "Account disabled"</td>
+        <td>Super Admin has disabled the account</td>
+        <td>Contact your Super Admin to re-enable the account.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>Score update not appearing on the scoreboard</td>
+        <td>Realtime connection lost</td>
+        <td>Refresh the scoreboard page. Check the System Monitor for Realtime status. Ensure the device running the scoreboard has a stable connection.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>COURT Scout shows "ZVA ERROR"</td>
+        <td>Match ID not found in database</td>
+        <td>Ensure the match exists and is in Scheduled or Live status in the admin Matches page.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>O2 upload fails</td>
+        <td>File too large or wrong format</td>
+        <td>Ensure the file is PDF, JPG, PNG, or WEBP and under 10 MB. Compress large PDFs before uploading.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>Team admin cannot see their team's data</td>
+        <td>Wrong team assigned in admin account</td>
+        <td>A Super Admin must edit the team admin's account and assign the correct team.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>Player not appearing in COURT Scout roster</td>
+        <td>Player not linked to that team in the database</td>
+        <td>Go to Players, find the player, and ensure their team assignment is correct.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>News article not showing on public site</td>
+        <td>Article may not be published</td>
+        <td>Open the article in the admin News page and confirm it is published (not in draft).</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>System Monitor shows DB ERROR</td>
+        <td>Supabase outage or configuration issue</td>
+        <td>Check status.supabase.com for any service incidents. If all clear, contact your technical support contact.</td>
+      </tr>
+      <tr class="avoid-break">
+        <td>Page loads very slowly</td>
+        <td>Poor network or server cold-start</td>
+        <td>Wait 20 seconds and refresh. Railway may be waking up the server from sleep. If persistent, check System Monitor.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info avoid-break" style="margin-top:20px">
+    <div class="callout-icon">📞</div>
+    <div class="callout-body">
+      <div class="callout-title">Who to contact for technical support</div>
+      For issues that cannot be resolved using this guide, contact the ZVA system administrator.
+      When reporting a problem, include: the page you were on, what you clicked, and what error
+      message appeared (take a screenshot if possible). This helps diagnose problems faster.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHAPTER 14 — QUICK REFERENCE                          -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <div class="page-header-logo"><span>ZVA</span> Zimbabwe Volleyball Association — Administrator Guide</div>
+    <div>Chapter 14 · Quick Reference</div>
+  </div>
+
+  <div class="chapter-header avoid-break">
+    <div class="chapter-num-box">14</div>
+    <div class="chapter-header-text">
+      <div class="chapter-section">Chapter Fourteen</div>
+      <div class="chapter-title">Quick Reference Card</div>
+      <div class="chapter-desc">All URLs, roles, and key actions at a glance — keep this page handy</div>
+    </div>
+  </div>
+
+  <h2>Important URLs</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Description</th><th>URL</th></tr></thead>
+    <tbody>
+      <tr><td>Public website</td><td><span class="url">https://zva-system.up.railway.app</span></td></tr>
+      <tr><td>Admin login</td><td><span class="url">https://zva-system.up.railway.app/admin/login</span></td></tr>
+      <tr><td>Admin dashboard</td><td><span class="url">https://zva-system.up.railway.app/admin</span></td></tr>
+      <tr><td>Live scoreboard (any match)</td><td><span class="url">https://zva-system.up.railway.app/scoreboard/[match-id]</span></td></tr>
+      <tr><td>COURT Scout</td><td><span class="url">https://zva-system.up.railway.app/admin/scout</span></td></tr>
+      <tr><td>System Monitor</td><td><span class="url">https://zva-system.up.railway.app/admin/system</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Roles at a Glance</h2>
+  <table class="role-table avoid-break">
+    <thead><tr><th>Role</th><th>Can do</th><th>Cannot do</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-gold">Super Admin</span></td>
+        <td>Everything</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">Admin</span></td>
+        <td>Matches, scoring, teams, players, news, tournaments</td>
+        <td>Manage admin accounts, system monitor</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">Team Admin</span></td>
+        <td>View own team, upload O2 forms</td>
+        <td>See other teams, edit fixtures, publish news</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">Statistician</span></td>
+        <td>Use COURT Scout app, record stats, export CSV</td>
+        <td>Edit any data, view admin panel pages</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Match Workflow — Game Day Checklist</h2>
+  <ul class="checklist avoid-break">
+    <li>Match is scheduled in the system with correct teams, venue, and time ✓</li>
+    <li>TV/projector is loaded with the scoreboard URL for the match ✓</li>
+    <li>Statistician has logged in and selected the match in COURT Scout ✓</li>
+    <li>Statistician clicks Load Roster and confirms players are correct ✓</li>
+    <li>Admin clicks "Start Match" in Live Scoring (or statistician starts in COURT) ✓</li>
+    <li>Scores are updated in real time throughout the match ✓</li>
+    <li>Sets are ended after each set concludes ✓</li>
+    <li>Match completes automatically when a team wins 3 sets ✓</li>
+    <li>Statistician exports CSV for FIVB reporting if required ✓</li>
+    <li>Match report article published in News after the match ✓</li>
+  </ul>
+
+  <div class="section-divider"></div>
+
+  <h2>O2 Form Requirements</h2>
+  <ul class="checklist avoid-break">
+    <li>File format: PDF (preferred), JPG, PNG, or WEBP</li>
+    <li>Maximum file size: 10 MB</li>
+    <li>All fields on the O2 form must be clearly legible</li>
+    <li>Season must be selected correctly before uploading</li>
+    <li>Player count must match the number of players listed on the form</li>
+  </ul>
+
+  <div class="section-divider"></div>
+
+  <!-- Footer -->
+  <div style="margin-top:30px;padding-top:20px;border-top:2px solid var(--dark);display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-weight:900;color:var(--dark);font-size:13px">Zimbabwe Volleyball Association</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">Digital Management System — Administrator Guide v1.0 · May 2026</div>
+      <div style="font-size:9.5px;color:var(--muted);margin-top:1px">Confidential — For Authorised Administrators Only</div>
+    </div>
+    <div style="width:44px;height:44px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px">ZVA</div>
+  </div>
+</div>
+
+</div><!-- /document -->
+
+<!-- Print button (screen only) -->
+<button class="print-btn no-print" onclick="window.print()">
+  🖨️ Save as PDF
+</button>
+
+</body>
+</html>
