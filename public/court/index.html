@@ -1,0 +1,2471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="COURT"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0f1923"/>
+<meta name="format-detection" content="telephone=no"/>
+<meta name="apple-touch-fullscreen" content="yes"/>
+<meta name="HandheldFriendly" content="true"/>
+<title>COURT — Volleyball Scout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM — Tactile Court Aesthetic
+   High contrast · Large tap targets · Fast
+   Mobile-optimized with safe area support
+═══════════════════════════════════════════ */
+:root {
+  --court:   #0f1923;
+  --court2:  #162030;
+  --court3:  #1d2c3f;
+  --line:    #243347;
+  --line2:   #2e4260;
+  --muted:   #4d6a82;
+  --dim:     #8aafc8;
+  --text:    #cce0f0;
+  --white:   #eef6ff;
+  --volt:    #ffe033;   /* primary action */
+  --volt2:   #ccb000;
+  --fire:    #ff5533;   /* error / sell */
+  --sky:     #33ccff;   /* away team */
+  --green:   #33ff99;   /* success */
+  --orange:  #ff9933;   /* warning */
+
+  /* Action colors */
+  --c-attack:  #ff5533;
+  --c-serve:   #ffe033;
+  --c-block:   #33ccff;
+  --c-dig:     #33ff99;
+  --c-set:     #bb88ff;
+  --c-receive: #ff9933;
+
+  --r: 10px;
+  --r-lg: 16px;
+  --tap: 68px;   /* Increased minimum tap target for better mobile UX */
+
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Barlow', sans-serif;
+  
+  /* Safe area insets for notched devices */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+  --safe-right: env(safe-area-inset-right);
+  
+  /* Mobile-optimized transitions - faster for better responsiveness */
+  --transition-fast: 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+  --transition-normal: 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+@supports (padding: max(0px)) {
+  :root {
+    --safe-top: max(0px, env(safe-area-inset-top));
+    --safe-bottom: max(0px, env(safe-area-inset-bottom));
+    --safe-left: max(0px, env(safe-area-inset-left));
+    --safe-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  -webkit-tap-highlight-color: transparent;
+  /* Hardware acceleration for smoother animations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+html {
+  height: 100%;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  overflow: hidden;
+  background: var(--court);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-size-adjust: 100%; /* Prevent font scaling in landscape */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--court);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none; /* Prevent pull-to-refresh */
+  position: fixed; /* Prevent scroll on mobile */
+  width: 100%;
+  /* iOS Safari specific fixes */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── OFFLINE BANNER ── */
+.offline-banner {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: var(--orange); color: var(--court);
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.1em; text-align: center; padding: 6px;
+  z-index: 9999; display: none;
+}
+.offline-banner.show { display: block; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; 
+  bottom: calc(24px + var(--safe-bottom)); 
+  left: 50%; 
+  transform: translateX(-50%) translateY(80px);
+  background: var(--green); color: var(--court);
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  letter-spacing: 0.08em; padding: 12px 24px; border-radius: 40px;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 9998; white-space: nowrap;
+  max-width: calc(100vw - 32px); /* Prevent overflow on small screens */
+  text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--fire); color: #fff; }
+
+/* ══════════════════════════════════
+   APP SHELL
+══════════════════════════════════ */
+.app { 
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport for mobile */
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden;
+  /* Only apply safe area to top/bottom - sides handled per-component */
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── TOP NAV ── */
+.topbar {
+  display: flex; align-items: center; gap: 0;
+  background: var(--court2);
+  border-bottom: 2px solid var(--volt);
+  flex-shrink: 0; 
+  min-height: 56px;
+  padding: 0 max(4px, var(--safe-left)) 0 max(4px, var(--safe-right));
+}
+
+.app-logo {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 800;
+  letter-spacing: 0.15em; color: var(--volt);
+  padding: 0 16px; flex-shrink: 0;
+}
+
+.nav-tabs { display: flex; flex: 1; height: 100%; }
+.nav-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.12em; color: var(--muted);
+  border-bottom: 3px solid transparent;
+  cursor: pointer; transition: all var(--transition-fast);
+  padding: 0 4px;
+  min-height: 56px;
+  position: relative;
+  /* Better touch feedback */
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+}
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0);
+  transition: background var(--transition-fast);
+  pointer-events: none;
+}
+.nav-tab:active::before {
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-tab.active { color: var(--white); border-bottom-color: var(--volt); }
+
+/* Mobile: Smaller nav text on very small screens */
+@media (max-width: 360px) {
+  .nav-tab {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .app-logo {
+    font-size: 22px;
+    padding: 0 12px;
+  }
+}
+
+.offline-indicator {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); margin-right: 12px; flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+}
+.offline-indicator.offline { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+/* ── PAGES ── */
+.pages { flex: 1; overflow: hidden; position: relative; }
+.page { 
+  position: absolute; 
+  inset: 0; 
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none; 
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+.page.active { display: block; }
+
+/* ══════════════════════════════════
+   PAGE 1 — MATCH SETUP
+══════════════════════════════════ */
+.setup-page { padding: 20px 16px 100px; max-width: 700px; margin: 0 auto; }
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 800; letter-spacing: 0.1em;
+  color: var(--white); margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; letter-spacing: 0.04em; }
+
+.form-section { margin-bottom: 24px; }
+.form-label {
+  font-family: var(--font-display); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase;
+  margin-bottom: 8px; display: block;
+}
+
+.form-input {
+  width: 100%; background: var(--court3); border: 1.5px solid var(--line2);
+  color: var(--white); font-family: var(--font-body); font-size: 17px;
+  padding: 14px 16px; border-radius: var(--r); outline: none;
+  transition: border-color 0.2s; -webkit-appearance: none;
+  min-height: var(--tap);
+}
+.form-input:focus { border-color: var(--volt); }
+.form-input::placeholder { color: var(--muted); }
+
+.teams-grid { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px; align-items: center; margin-bottom: 16px; }
+.vs-badge {
+  font-family: var(--font-display); font-size: 20px; font-weight: 800;
+  color: var(--muted); text-align: center;
+}
+
+.sets-picker { display: flex; gap: 10px; }
+.set-option {
+  flex: 1; min-height: 56px; border-radius: var(--r);
+  border: 2px solid var(--line2); background: var(--court3);
+  font-family: var(--font-display); font-size: 20px; font-weight: 700;
+  color: var(--muted); cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.set-option.selected { background: var(--volt); border-color: var(--volt); color: var(--court); }
+
+/* Player roster builder */
+.player-row {
+  display: grid; grid-template-columns: 64px 1fr 90px 44px;
+  gap: 8px; margin-bottom: 8px; align-items: center;
+}
+.player-num-input {
+  background: var(--court3); border: 1.5px solid var(--line2);
+  color: var(--volt); font-family: var(--font-display); font-size: 22px;
+  font-weight: 800; text-align: center; padding: 10px 4px;
+  border-radius: var(--r); outline: none; width: 100%; min-height: 52px;
+}
+.player-name-input {
+  background: var(--court3); border: 1.5px solid var(--line2);
+  color: var(--white); font-family: var(--font-body); font-size: 15px;
+  padding: 14px 12px; border-radius: var(--r); outline: none;
+  width: 100%; min-height: 52px;
+}
+.player-num-input:focus, .player-name-input:focus { border-color: var(--volt); }
+.pos-select {
+  background: var(--court3); border: 1.5px solid var(--line2);
+  color: var(--dim); font-family: var(--font-display); font-size: 14px;
+  font-weight: 700; letter-spacing: 0.06em; padding: 10px 6px;
+  border-radius: var(--r); outline: none; width: 100%; min-height: 52px;
+  -webkit-appearance: none; text-align: center;
+}
+.del-btn {
+  width: 44px; height: 52px; border-radius: var(--r);
+  background: rgba(255,85,51,0.1); border: 1.5px solid rgba(255,85,51,0.3);
+  color: var(--fire); font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.del-btn:active { background: rgba(255,85,51,0.25); }
+
+.add-player-btn {
+  width: 100%; min-height: 52px; border-radius: var(--r);
+  border: 2px dashed var(--line2); background: transparent;
+  color: var(--muted); font-family: var(--font-display); font-size: 15px;
+  font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+  transition: all 0.2s; margin-top: 4px;
+}
+.add-player-btn:active { border-color: var(--volt); color: var(--volt); background: rgba(255,224,51,0.04); }
+
+.team-label-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.team-color-home { width: 10px; height: 10px; border-radius: 50%; background: var(--volt); }
+.team-color-away { width: 10px; height: 10px; border-radius: 50%; background: var(--sky); }
+.team-section-label { font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: 0.1em; color: var(--white); }
+
+/* Big action button */
+.btn-primary {
+  width: 100%; min-height: 68px; border-radius: var(--r-lg);
+  background: var(--volt); border: none;
+  font-family: var(--font-display); font-size: 24px; font-weight: 800;
+  letter-spacing: 0.12em; color: var(--court); cursor: pointer;
+  transition: all 0.15s; margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(255,224,51,0.25);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-primary:active { 
+  transform: scale(0.98); 
+  box-shadow: none; 
+}
+.btn-primary:disabled { 
+  background: var(--line2); 
+  color: var(--muted); 
+  box-shadow: none; 
+  cursor: not-allowed; 
+}
+
+.btn-secondary {
+  width: 100%; min-height: 56px; border-radius: var(--r);
+  background: transparent; border: 2px solid var(--line2);
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--dim); cursor: pointer;
+  transition: all 0.15s; margin-top: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-secondary:active { 
+  border-color: var(--volt); 
+  color: var(--volt);
+  transform: scale(0.98);
+}
+
+/* ══════════════════════════════════
+   PAGE 2 — LIVE RECORDING
+══════════════════════════════════ */
+.record-page { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+/* Scoreboard */
+.scoreboard {
+  background: var(--court2); border-bottom: 1px solid var(--line);
+  padding: 12px 16px; flex-shrink: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 8px; align-items: center;
+}
+.score-team { display: flex; flex-direction: column; gap: 2px; }
+.score-team.away { align-items: flex-end; }
+.score-team-name {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.score-team-name.home { color: var(--volt); }
+.score-team-name.away { color: var(--sky); }
+.score-sets { display: flex; gap: 3px; }
+.set-pip {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--line2); background: transparent;
+}
+.set-pip.won { background: currentColor; border-color: currentColor; }
+.home-pip { color: var(--volt); }
+.away-pip { color: var(--sky); }
+
+.score-center-block { text-align: center; }
+.score-big {
+  font-family: var(--font-display); font-size: 52px; font-weight: 800;
+  line-height: 1; color: var(--white); letter-spacing: 0.04em;
+}
+.score-big .sep { color: var(--line2); margin: 0 6px; }
+.score-set-label {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.1em;
+  font-family: var(--font-display); font-weight: 600; margin-top: 2px;
+}
+
+/* Set Scores History */
+.set-scores-container {
+  background: var(--court2); border-bottom: 1px solid var(--line);
+  padding: 8px 16px; display: flex; gap: 12px; align-items: center;
+  justify-content: center; flex-wrap: wrap;
+}
+.set-score-item {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--court3); border: 1px solid var(--line2);
+  border-radius: 6px; padding: 4px 10px;
+}
+.set-num {
+  font-family: var(--font-display); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--muted);
+}
+.set-score-val {
+  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  color: var(--white); letter-spacing: 0.02em;
+}
+
+/* Score controls */
+.score-controls {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 10px 16px;
+  background: var(--court2); border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.score-btn {
+  min-height: 60px; /* Increased from 52px for better mobile touch */
+  border-radius: var(--r);
+  border: none; cursor: pointer;
+  font-family: var(--font-display); font-size: 18px; font-weight: 800;
+  letter-spacing: 0.08em; 
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
+}
+.score-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.score-btn:active::before {
+  opacity: 1;
+}
+.score-btn.home-point { background: rgba(255,224,51,0.15); color: var(--volt); border: 1.5px solid rgba(255,224,51,0.3); }
+.score-btn.away-point { background: rgba(51,204,255,0.12); color: var(--sky); border: 1.5px solid rgba(51,204,255,0.3); }
+.score-btn:active { transform: scale(0.95); }
+.score-btn .pts-delta { font-size: 26px; line-height: 1; }
+
+/* Set end controls */
+.set-controls {
+  display: flex; gap: 8px; padding: 0 16px 10px;
+  background: var(--court2); border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.btn-end-set {
+  flex: 1; min-height: 52px; border-radius: var(--r);
+  background: rgba(255,153,51,0.1); border: 1.5px solid rgba(255,153,51,0.3);
+  color: var(--orange); font-family: var(--font-display);
+  font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-end-set:active { 
+  background: rgba(255,153,51,0.25); 
+  transform: scale(0.97);
+}
+.btn-undo {
+  min-height: 52px; min-width: 88px; border-radius: var(--r);
+  background: rgba(255,85,51,0.08); border: 1.5px solid rgba(255,85,51,0.2);
+  color: var(--fire); font-family: var(--font-display);
+  font-size: 14px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-undo:active { 
+  background: rgba(255,85,51,0.2); 
+  transform: scale(0.97);
+}
+
+/* Player selector */
+.player-selector {
+  flex-shrink: 0; border-bottom: 1px solid var(--line);
+  background: var(--court);
+}
+.player-selector-label {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.15em; color: var(--muted); padding: 8px 16px 4px;
+}
+
+/* Rotation controls */
+.rotation-controls {
+  display: flex; gap: 10px; padding: 8px 16px;
+  background: var(--court); border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.rotation-team-section {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+}
+.rotation-label {
+  font-family: var(--font-display); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; color: var(--muted); min-width: 50px;
+}
+.rotation-buttons {
+  display: flex; gap: 4px;
+}
+.rotation-btn {
+  min-width: 32px; min-height: 32px; border-radius: 6px;
+  border: 1.5px solid var(--line2); background: var(--court3);
+  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  color: var(--muted); cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.rotation-btn.active {
+  border-color: var(--volt); background: rgba(255,224,51,0.15);
+  color: var(--volt);
+}
+.rotation-btn.away.active {
+  border-color: var(--sky); background: rgba(51,204,255,0.15);
+  color: var(--sky);
+}
+.rotation-btn:active { transform: scale(0.92); }
+
+.sub-btn {
+  min-width: 64px; min-height: 32px; border-radius: 6px;
+  border: 1.5px solid rgba(187,136,255,0.3); background: rgba(187,136,255,0.1);
+  font-family: var(--font-display); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--c-set); cursor: pointer;
+  transition: all 0.15s; padding: 0 8px;
+}
+.sub-btn:active { background: rgba(187,136,255,0.2); }
+
+.player-scroll {
+  display: flex; gap: 8px; padding: 6px 16px 10px;
+  overflow-x: auto; 
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+}
+.player-scroll::-webkit-scrollbar { display: none; }
+.player-chip {
+  flex-shrink: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+  min-width: 64px; min-height: 64px; border-radius: var(--r);
+  border: 2px solid var(--line2); background: var(--court3);
+  cursor: pointer; transition: all 0.15s; padding: 8px 6px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.player-chip:active {
+  transform: scale(0.95);
+  transition: transform 0.05s;
+}
+.player-chip.selected {
+  border-color: var(--volt); background: rgba(255,224,51,0.1);
+  transform: scale(1.05);
+}
+.player-chip.away-chip.selected {
+  border-color: var(--sky); background: rgba(51,204,255,0.1);
+  transform: scale(1.05);
+}
+.chip-num {
+  font-family: var(--font-display); font-size: 22px; font-weight: 800;
+  color: var(--volt); line-height: 1;
+}
+.away-chip .chip-num { color: var(--sky); }
+.chip-name { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.2; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-pos { font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--muted); }
+
+.team-divider {
+  flex-shrink: 0; display: flex; align-items: center;
+  padding: 0 4px;
+}
+.team-divider-line {
+  width: 2px; height: 40px; background: var(--line);
+  border-radius: 1px;
+}
+
+/* Action grid */
+.action-grid-wrap {
+  flex: 1; overflow-y: auto; padding: 12px 16px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.action-grid-label {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.15em; color: var(--muted); margin-bottom: 8px;
+}
+.action-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 14px;
+}
+.action-btn {
+  min-height: 80px; border-radius: var(--r-lg);
+  border: 2px solid transparent; cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  transition: all 0.12s; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.action-btn:active { 
+  transform: scale(0.94);
+  transition: transform 0.05s;
+}
+.action-btn .a-icon { font-size: 28px; line-height: 1; }
+.action-btn .a-label {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.action-btn .a-count {
+  position: absolute; top: 6px; right: 8px;
+  font-family: var(--font-display); font-size: 13px; font-weight: 800;
+  opacity: 0.7;
+}
+
+/* Action types */
+.btn-attack  { background: rgba(255,85,51,0.12);  border-color: rgba(255,85,51,0.3);  color: var(--c-attack); }
+.btn-kill    { background: rgba(255,85,51,0.22);  border-color: var(--c-attack);      color: var(--c-attack); }
+.btn-serve   { background: rgba(255,224,51,0.1);  border-color: rgba(255,224,51,0.3); color: var(--c-serve); }
+.btn-ace     { background: rgba(255,224,51,0.22); border-color: var(--c-serve);       color: var(--c-serve); }
+.btn-block   { background: rgba(51,204,255,0.1);  border-color: rgba(51,204,255,0.3); color: var(--c-block); }
+.btn-dig     { background: rgba(51,255,153,0.1);  border-color: rgba(51,255,153,0.3); color: var(--c-dig); }
+.btn-set     { background: rgba(187,136,255,0.1); border-color: rgba(187,136,255,0.3);color: var(--c-set); }
+.btn-receive { background: rgba(255,153,51,0.1);  border-color: rgba(255,153,51,0.3); color: var(--c-receive); }
+.btn-error   { background: rgba(255,85,51,0.08);  border-color: rgba(255,85,51,0.2);  color: var(--fire); }
+
+/* Outcome selector */
+.outcome-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px;
+}
+.outcome-btn {
+  min-height: 56px; border-radius: var(--r);
+  border: 2px solid var(--line2); background: var(--court3);
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--muted); cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.outcome-btn:active {
+  transform: scale(0.95);
+  transition: transform 0.05s;
+}
+.outcome-btn.good  { border-color: var(--green); color: var(--green); background: rgba(51,255,153,0.07); }
+.outcome-btn.ok    { border-color: var(--orange); color: var(--orange); background: rgba(255,153,51,0.07); }
+.outcome-btn.bad   { border-color: var(--fire); color: var(--fire); background: rgba(255,85,51,0.07); }
+.outcome-btn.selected-outcome { filter: brightness(1.3); box-shadow: 0 0 12px currentColor; }
+
+/* Detail selector (attack type, serve type) */
+.detail-area { margin-bottom: 10px; }
+.detail-row {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px;
+}
+.detail-btn {
+  min-height: 48px; border-radius: var(--r);
+  border: 2px solid var(--line2); background: var(--court3);
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--dim); cursor: pointer;
+  transition: all 0.15s; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+}
+.detail-btn .detail-icon { font-size: 16px; line-height: 1; }
+.detail-btn .detail-label { font-size: 11px; letter-spacing: 0.08em; }
+.detail-btn.selected-detail {
+  border-color: var(--volt); background: rgba(255,224,51,0.12);
+  color: var(--volt);
+}
+.detail-btn:active { transform: scale(0.94); }
+
+/* No player warning */
+.no-player-msg {
+  text-align: center; padding: 20px;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+
+/* ══════════════════════════════════
+   PAGE 3 — MATCH LOG / REVIEW
+══════════════════════════════════ */
+.log-page { padding: 16px 16px 100px; }
+
+.log-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 8px 16px; border-radius: 20px;
+  border: 1.5px solid var(--line2); background: transparent;
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--muted); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.filter-chip.active { background: var(--volt); border-color: var(--volt); color: var(--court); }
+
+.export-btn {
+  margin-left: auto; padding: 8px 20px; border-radius: 20px;
+  border: 1.5px solid var(--green); background: rgba(51,255,153,0.08);
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--green); cursor: pointer;
+}
+.export-btn:active { background: rgba(51,255,153,0.2); }
+
+/* Stat summary cards */
+.stat-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--court2); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 12px;
+}
+.stat-card-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; font-family: var(--font-display); font-weight: 700; margin-bottom: 4px; }
+.stat-card-val { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--white); line-height: 1; }
+.stat-card-val.volt { color: var(--volt); }
+.stat-card-val.sky  { color: var(--sky); }
+.stat-card-val.fire { color: var(--fire); }
+
+/* Event log */
+.event-log { display: flex; flex-direction: column; gap: 6px; }
+.event-item {
+  background: var(--court2); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px;
+  display: grid; grid-template-columns: 36px 1fr auto;
+  gap: 10px; align-items: center;
+  animation: fadein 0.2s ease;
+}
+@keyframes fadein { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+.event-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.event-body {}
+.event-action { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.06em; }
+.event-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.event-score {
+  font-family: var(--font-display); font-size: 14px; font-weight: 800;
+  color: var(--dim); text-align: right; white-space: nowrap;
+}
+.event-score small { display: block; font-size: 10px; color: var(--muted); font-family: var(--font-body); }
+
+.outcome-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; margin-right: 4px; flex-shrink: 0;
+}
+.dot-good { background: var(--green); }
+.dot-ok   { background: var(--orange); }
+.dot-bad  { background: var(--fire); }
+
+/* Player performance table */
+.perf-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.perf-table thead th {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--muted); text-align: center;
+  padding: 8px 6px; border-bottom: 1px solid var(--line);
+}
+.perf-table thead th:first-child { text-align: left; }
+.perf-table tbody tr { border-bottom: 1px solid var(--line); }
+.perf-table tbody tr:last-child { border: none; }
+.perf-table tbody td { padding: 10px 6px; font-size: 13px; text-align: center; }
+.perf-table tbody td:first-child { text-align: left; }
+.p-name { font-weight: 500; color: var(--white); }
+.p-num-badge {
+  display: inline-block; font-family: var(--font-display); font-size: 16px;
+  font-weight: 800; color: var(--volt); min-width: 24px; margin-right: 6px;
+}
+.p-num-badge.away { color: var(--sky); }
+
+/* ══════════════════════════════════
+   MATCH HISTORY PAGE
+══════════════════════════════════ */
+.history-page { padding: 16px 16px 100px; }
+
+.match-card {
+  background: var(--court2); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.match-card:active { background: var(--court3); }
+.match-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.match-date { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+.match-status { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
+.status-complete { color: var(--green); }
+.status-ongoing  { color: var(--orange); }
+
+.match-teams {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 18px; font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.match-home { color: var(--volt); }
+.match-away { color: var(--sky); }
+.match-score-disp { color: var(--white); font-size: 22px; }
+.match-sets-summary { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.no-matches {
+  text-align: center; padding: 60px 20px;
+  font-family: var(--font-display); font-size: 20px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,25,35,0.85);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 500; display: none;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--court2); border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 2px solid var(--volt); width: 100%; max-width: 600px;
+  padding: 20px 20px 40px; max-height: 80vh; overflow-y: auto;
+}
+.modal-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: 0.08em; color: var(--white); margin-bottom: 16px; }
+.modal-close {
+  float: right; background: transparent; border: none;
+  color: var(--muted); font-size: 24px; cursor: pointer;
+  margin-top: -4px; margin-right: -4px;
+}
+</style>
+</head>
+<body>
+
+<div class="offline-banner" id="offlineBanner">⚠ OFFLINE — All data saved locally</div>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- TOP NAV -->
+  <div class="topbar">
+    <div class="app-logo">COURT</div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="showTab('setup')">SETUP</div>
+      <div class="nav-tab" onclick="showTab('record')" id="tab-record">RECORD</div>
+      <div class="nav-tab" onclick="showTab('log')">LOG</div>
+      <div class="nav-tab" onclick="showTab('history')">HISTORY</div>
+    </div>
+    <div class="offline-indicator" id="offlineIndicator" title="Offline-ready"></div>
+  </div>
+
+  <!-- PAGES -->
+  <div class="pages">
+
+    <!-- ══════════ SETUP PAGE ══════════ -->
+    <div class="page active" id="page-setup">
+      <div class="setup-page">
+        <div class="page-title">MATCH SETUP</div>
+        <div class="page-sub">Configure match before recording begins</div>
+
+        <!-- Match info -->
+        <div class="form-section">
+          <label class="form-label">Competition / Event</label>
+          <input class="form-input" id="competitionName" placeholder="e.g. FIVB World League 2025" type="text"/>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Teams</label>
+          <div class="teams-grid">
+            <input class="form-input" id="homeTeamName" placeholder="Home team" type="text" value="VÓLEI BRASIL"/>
+            <div class="vs-badge">VS</div>
+            <input class="form-input" id="awayTeamName" placeholder="Away team" type="text" value="ZENIT KAZAN"/>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Match Format</label>
+          <div class="sets-picker">
+            <div class="set-option" data-sets="3" onclick="selectSets(3)">BO3</div>
+            <div class="set-option selected" data-sets="5" onclick="selectSets(5)">BO5</div>
+          </div>
+        </div>
+
+        <!-- Home roster -->
+        <div class="form-section">
+          <div class="team-label-row">
+            <div class="team-color-home"></div>
+            <div class="team-section-label" id="homeRosterLabel">HOME ROSTER</div>
+          </div>
+          <div id="homeRoster"></div>
+          <button class="add-player-btn" onclick="addPlayer('home')">+ ADD PLAYER</button>
+        </div>
+
+        <!-- Away roster -->
+        <div class="form-section">
+          <div class="team-label-row">
+            <div class="team-color-away"></div>
+            <div class="team-section-label" id="awayRosterLabel">AWAY ROSTER</div>
+          </div>
+          <div id="awayRoster"></div>
+          <button class="add-player-btn" onclick="addPlayer('away')">+ ADD PLAYER</button>
+        </div>
+
+        <button class="btn-primary" onclick="startMatch()">▶ START MATCH</button>
+        <button class="btn-secondary" onclick="loadLastMatch()">↩ RESUME LAST MATCH</button>
+      </div>
+    </div>
+
+    <!-- ══════════ RECORD PAGE ══════════ -->
+    <div class="page" id="page-record">
+      <div class="record-page">
+
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+          <div class="score-team">
+            <div class="score-team-name home" id="scoreHomeName">HOME</div>
+            <div class="score-sets" id="homeSetPips"></div>
+          </div>
+          <div class="score-center-block">
+            <div class="score-big">
+              <span id="scoreHome">0</span>
+              <span class="sep">–</span>
+              <span id="scoreAway">0</span>
+            </div>
+            <div class="score-set-label" id="setLabel">SET 1</div>
+          </div>
+          <div class="score-team away">
+            <div class="score-team-name away" id="scoreAwayName">AWAY</div>
+            <div class="score-sets" id="awaySetPips"></div>
+          </div>
+        </div>
+
+        <!-- Set Scores History -->
+        <div class="set-scores-container" id="setScoresDisplay" style="display:none;"></div>
+
+        <!-- Point buttons -->
+        <div class="score-controls">
+          <button class="score-btn home-point" onclick="addPoint('home')">
+            <span class="pts-delta">+1</span>
+            <span id="scoreBtnHomeName">HOME</span>
+          </button>
+          <button class="score-btn away-point" onclick="addPoint('away')">
+            <span id="scoreBtnAwayName">AWAY</span>
+            <span class="pts-delta">+1</span>
+          </button>
+        </div>
+
+        <!-- Set / undo controls -->
+        <div class="set-controls">
+          <button class="btn-end-set" onclick="endSet()">END SET</button>
+          <button class="btn-undo" onclick="undoLastEvent()">↩ UNDO</button>
+        </div>
+
+        <!-- Rotation & Substitution controls -->
+        <div class="rotation-controls">
+          <div class="rotation-team-section">
+            <div class="rotation-label" id="homeRotLabel">HOME</div>
+            <div class="rotation-buttons" id="homeRotButtons"></div>
+          </div>
+          <button class="sub-btn" onclick="showSubstitutionModal()">SUB</button>
+          <div class="rotation-team-section">
+            <div class="rotation-label" id="awayRotLabel">AWAY</div>
+            <div class="rotation-buttons" id="awayRotButtons"></div>
+          </div>
+        </div>
+
+        <!-- Player selector -->
+        <div class="player-selector">
+          <div class="player-selector-label">SELECT PLAYER</div>
+          <div class="player-scroll" id="playerChips"></div>
+        </div>
+
+        <!-- Action grid -->
+        <div class="action-grid-wrap">
+          <div id="noPlayerMsg" class="no-player-msg">👆 Select a player above to log an action</div>
+          <div id="actionArea" style="display:none">
+            <div class="action-grid-label">ACTION TYPE</div>
+            <div class="action-grid" id="actionGrid"></div>
+
+            <div id="detailArea" style="display:none">
+              <div class="action-grid-label" style="margin-top:6px" id="detailAreaLabel">ATTACK TYPE</div>
+              <div class="detail-row" id="detailGrid"></div>
+            </div>
+
+            <div id="outcomeArea" style="display:none">
+              <div class="action-grid-label" style="margin-top:6px">OUTCOME</div>
+              <div class="outcome-row">
+                <button class="outcome-btn good" onclick="selectOutcome('good')">✓ GOOD</button>
+                <button class="outcome-btn ok"   onclick="selectOutcome('ok')">~ OK</button>
+                <button class="outcome-btn bad"  onclick="selectOutcome('bad')">✗ ERROR</button>
+              </div>
+              <button class="btn-primary" id="logEventBtn" onclick="logEvent()" style="min-height:60px;font-size:20px;margin-top:4px" disabled>LOG ACTION</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ LOG PAGE ══════════ -->
+    <div class="page" id="page-log">
+      <div class="log-page">
+        <div class="page-title">MATCH LOG</div>
+        <div class="page-sub" id="logMatchTitle">No match in progress</div>
+
+        <!-- Summary stat cards -->
+        <div class="stat-cards" id="statCards"></div>
+
+        <!-- Filters -->
+        <div class="log-controls" id="logFilters">
+          <button class="filter-chip active" onclick="filterLog('all',this)">ALL</button>
+          <button class="filter-chip" onclick="filterLog('attack',this)">ATTACKS</button>
+          <button class="filter-chip" onclick="filterLog('serve',this)">SERVES</button>
+          <button class="filter-chip" onclick="filterLog('block',this)">BLOCKS</button>
+          <button class="filter-chip" onclick="filterLog('dig',this)">DIGS</button>
+          <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
+        </div>
+
+        <div class="event-log" id="eventLog"></div>
+
+        <div style="margin-top:24px">
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:0.1em;color:var(--dim);margin-bottom:12px">PLAYER PERFORMANCE</div>
+          <div style="overflow-x:auto">
+            <table class="perf-table" id="perfTable">
+              <thead><tr>
+                <th style="text-align:left">PLAYER</th>
+                <th>ATK</th><th>KILL</th><th>ERR</th>
+                <th>SRV</th><th>ACE</th>
+                <th>BLK</th><th>DIG</th><th>RCV</th><th>SET</th>
+              </tr></thead>
+              <tbody id="perfBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ HISTORY PAGE ══════════ -->
+    <div class="page" id="page-history">
+      <div class="history-page">
+        <div class="page-title">MATCH HISTORY</div>
+        <div class="page-sub">All saved matches stored offline on this device</div>
+        <div id="matchHistoryList"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+</div><!-- /app -->
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">End Set?</div>
+    <div id="modalBody" style="color:var(--dim);font-size:14px;margin-bottom:20px"></div>
+    <button class="btn-primary" id="modalConfirm">CONFIRM</button>
+    <button class="btn-secondary" onclick="closeModal()">CANCEL</button>
+  </div>
+</div>
+
+<!-- SUBSTITUTION MODAL -->
+<div class="modal-overlay" id="subModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSubModal()">✕</button>
+    <div class="modal-title">SUBSTITUTION</div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:0.08em;">PLAYER OUT</div>
+      <select id="subPlayerOut" class="form-input" style="margin-bottom:12px"></select>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:0.08em;">PLAYER IN</div>
+      <select id="subPlayerIn" class="form-input"></select>
+    </div>
+    <button class="btn-primary" onclick="confirmSubstitution()">SUBSTITUTE</button>
+    <button class="btn-secondary" onclick="closeSubModal()">CANCEL</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// INDEXEDDB — Persistent offline storage
+// ════════════════════════════════════════════════
+const DB_NAME = 'CourtVB';
+const DB_VER  = 1;
+let db;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('matches'))
+        d.createObjectStore('matches', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('events'))
+        d.createObjectStore('events', { keyPath: 'id', autoIncrement: true })
+          .createIndex('matchId', 'matchId', { unique: false });
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res(req.result);
+    req.onerror  = () => rej(req.error);
+  });
+}
+
+// Use dbAdd for the events store (autoIncrement keyPath — put() needs the key present)
+function dbAdd(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).add(obj);
+    req.onsuccess = () => res(req.result);
+    req.onerror  = () => rej(req.error);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => res(req.result);
+    req.onerror  = () => rej(req.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror  = () => rej(req.error);
+  });
+}
+
+function dbGetByIndex(store, index, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).index(index).getAll(val);
+    req.onsuccess = () => res(req.result);
+    req.onerror  = () => rej(req.error);
+  });
+}
+
+// ════════════════════════════════════════════════
+// APP STATE
+// ════════════════════════════════════════════════
+let currentMatch = null;
+let homePlayers  = [];
+let awayPlayers  = [];
+let selectedPlayerId = null;
+let selectedAction   = null;
+let selectedOutcome  = null;
+let selectedDetail   = null; // For attack type, serve type, etc.
+let logFilter        = 'all';
+let maxSets          = 5;
+let homeRotation     = 1; // Current rotation position (1-6)
+let awayRotation     = 1;
+
+// Roster template per team
+let homeRosterRows = [
+  {num:'1', name:'', pos:'S'},
+  {num:'7', name:'', pos:'OH'},
+  {num:'14',name:'', pos:'MB'},
+];
+let awayRosterRows = [
+  {num:'2', name:'', pos:'S'},
+  {num:'5', name:'', pos:'OH'},
+  {num:'11',name:'', pos:'MB'},
+];
+
+const POSITIONS = ['S','OH','MB','OPP','L','DS'];
+const ACTION_DEFS = [
+  {key:'attack', label:'ATTACK', icon:'⚡', cls:'btn-attack'},
+  {key:'kill',   label:'KILL',   icon:'💥', cls:'btn-kill'},
+  {key:'serve',  label:'SERVE',  icon:'🏐', cls:'btn-serve'},
+  {key:'ace',    label:'ACE',    icon:'🎯', cls:'btn-ace'},
+  {key:'block',  label:'BLOCK',  icon:'🛡', cls:'btn-block'},
+  {key:'dig',    label:'DIG',    icon:'🤿', cls:'btn-dig'},
+  {key:'set',    label:'SET',    icon:'🙌', cls:'btn-set'},
+  {key:'receive',label:'RECEIVE',icon:'✋', cls:'btn-receive'},
+  {key:'error',  label:'ERROR',  icon:'✗',  cls:'btn-error'},
+];
+
+const ACTION_COLORS = {
+  attack:'rgba(255,85,51,0.15)', kill:'rgba(255,85,51,0.25)',
+  serve:'rgba(255,224,51,0.12)', ace:'rgba(255,224,51,0.25)',
+  block:'rgba(51,204,255,0.12)', dig:'rgba(51,255,153,0.12)',
+  set:'rgba(187,136,255,0.12)', receive:'rgba(255,153,51,0.12)',
+  error:'rgba(255,85,51,0.08)',
+};
+
+const ATTACK_TYPES = [
+  {key:'spike', label:'SPIKE', icon:'⚡'},
+  {key:'tip', label:'TIP', icon:'👆'},
+  {key:'roll', label:'ROLL', icon:'🌊'},
+  {key:'backrow', label:'BKROW', icon:'⬆️'},
+];
+
+const SERVE_TYPES = [
+  {key:'float', label:'FLOAT', icon:'🎈'},
+  {key:'jump', label:'JUMP', icon:'🦘'},
+  {key:'topspin', label:'SPIN', icon:'🌀'},
+];
+
+const ACTION_ICON_COLORS = {
+  attack:'#ff5533',kill:'#ff5533',serve:'#ffe033',ace:'#ffe033',
+  block:'#33ccff',dig:'#33ff99',set:'#bb88ff',receive:'#ff9933',error:'#ff5533'
+};
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+
+  if (name === 'log') refreshLog();
+  if (name === 'history') refreshHistory();
+}
+
+// ════════════════════════════════════════════════
+// SETUP — ROSTER BUILDER
+// ════════════════════════════════════════════════
+function renderRosterRows() {
+  renderTeamRoster('home', homeRosterRows, '#homeRoster');
+  renderTeamRoster('away', awayRosterRows, '#awayRoster');
+  document.getElementById('homeRosterLabel').textContent = 
+    (document.getElementById('homeTeamName').value || 'HOME') + ' ROSTER';
+  document.getElementById('awayRosterLabel').textContent = 
+    (document.getElementById('awayTeamName').value || 'AWAY') + ' ROSTER';
+}
+
+function renderTeamRoster(team, rows, selector) {
+  const el = document.querySelector(selector);
+  el.innerHTML = '';
+  rows.forEach((row, i) => {
+    const div = document.createElement('div');
+    div.className = 'player-row';
+    div.innerHTML = `
+      <input class="player-num-input" type="number" min="1" max="99"
+             value="${row.num}" placeholder="#"
+             onchange="updateRosterRow('${team}',${i},'num',this.value)"/>
+      <input class="player-name-input" type="text" value="${row.name}"
+             placeholder="Player name"
+             onchange="updateRosterRow('${team}',${i},'name',this.value)"/>
+      <select class="pos-select" onchange="updateRosterRow('${team}',${i},'pos',this.value)">
+        ${POSITIONS.map(p => `<option value="${p}" ${p===row.pos?'selected':''}>${p}</option>`).join('')}
+      </select>
+      <button class="del-btn" onclick="removePlayer('${team}',${i})">✕</button>`;
+    el.appendChild(div);
+  });
+}
+
+function updateRosterRow(team, i, field, val) {
+  const rows = team === 'home' ? homeRosterRows : awayRosterRows;
+  rows[i][field] = val;
+}
+
+function addPlayer(team) {
+  const rows = team === 'home' ? homeRosterRows : awayRosterRows;
+  rows.push({num: String(rows.length + 1), name: '', pos: 'OH'});
+  renderRosterRows();
+}
+
+function removePlayer(team, i) {
+  const rows = team === 'home' ? homeRosterRows : awayRosterRows;
+  rows.splice(i, 1);
+  renderRosterRows();
+}
+
+function selectSets(n) {
+  maxSets = n;
+  document.querySelectorAll('.set-option').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.sets) === n);
+  });
+}
+
+// ════════════════════════════════════════════════
+// START MATCH
+// ════════════════════════════════════════════════
+async function startMatch() {
+  const homeTeam = document.getElementById('homeTeamName').value.trim() || 'HOME';
+  const awayTeam = document.getElementById('awayTeamName').value.trim() || 'AWAY';
+  const competition = document.getElementById('competitionName').value.trim();
+
+  // Sync roster row inputs
+  document.querySelectorAll('#homeRoster .player-num-input').forEach((el, i) => { homeRosterRows[i].num = el.value; });
+  document.querySelectorAll('#homeRoster .player-name-input').forEach((el, i) => { homeRosterRows[i].name = el.value; });
+  document.querySelectorAll('#awayRoster .player-num-input').forEach((el, i) => { awayRosterRows[i].num = el.value; });
+  document.querySelectorAll('#awayRoster .player-name-input').forEach((el, i) => { awayRosterRows[i].name = el.value; });
+
+  // Build player objects
+  homePlayers = homeRosterRows
+    .filter(r => r.name.trim())
+    .map(r => ({ id: 'H' + r.num, num: r.num, name: r.name.trim(), pos: r.pos, team: 'home' }));
+  awayPlayers = awayRosterRows
+    .filter(r => r.name.trim())
+    .map(r => ({ id: 'A' + r.num, num: r.num, name: r.name.trim(), pos: r.pos, team: 'away' }));
+
+  currentMatch = {
+    id: 'M' + Date.now(),
+    competition,
+    homeTeam, awayTeam,
+    maxSets,
+    homeScore: 0, awayScore: 0,
+    homeSets: 0, awaySets: 0,
+    currentSet: 1,
+    setHistory: [],
+    status: 'ongoing',
+    startedAt: new Date().toISOString(),
+    homePlayers, awayPlayers,
+  };
+
+  await dbPut('matches', currentMatch);
+  toast('Match started!');
+  initRecordPage();
+  // Navigate to record tab
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-record').classList.add('active');
+  document.getElementById('tab-record').classList.add('active');
+}
+
+async function loadLastMatch() {
+  const all = await dbGetAll('matches');
+  if (!all.length) { toast('No saved matches found', true); return; }
+  all.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const m = all[0];
+  currentMatch = m;
+  homePlayers = m.homePlayers;
+  awayPlayers = m.awayPlayers;
+  maxSets = m.maxSets;
+  initRecordPage();
+  showTabDirect('record');
+  toast('Match resumed!');
+}
+
+function showTabDirect(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// RECORD PAGE
+// ════════════════════════════════════════════════
+function initRecordPage() {
+  if (!currentMatch) return;
+  homeRotation = 1;
+  awayRotation = 1;
+  updateScoreboard();
+  buildRotationButtons();
+  buildPlayerChips();
+  buildActionGrid();
+  selectedPlayerId = null;
+  selectedAction = null;
+  selectedOutcome = null;
+  selectedDetail = null;
+  document.getElementById('noPlayerMsg').style.display = '';
+  document.getElementById('actionArea').style.display = 'none';
+  document.getElementById('detailArea').style.display = 'none';
+}
+
+function updateScoreboard() {
+  if (!currentMatch) return;
+  console.log('updateScoreboard called with scores:', currentMatch.homeScore, '-', currentMatch.awayScore);
+  console.log('updateScoreboard: setHistory =', currentMatch.setHistory);
+  document.getElementById('scoreHomeName').textContent = currentMatch.homeTeam;
+  document.getElementById('scoreAwayName').textContent = currentMatch.awayTeam;
+  document.getElementById('scoreBtnHomeName').textContent = currentMatch.homeTeam;
+  document.getElementById('scoreBtnAwayName').textContent = currentMatch.awayTeam;
+  document.getElementById('scoreHome').textContent = currentMatch.homeScore;
+  document.getElementById('scoreAway').textContent = currentMatch.awayScore;
+  document.getElementById('setLabel').textContent = `SET ${currentMatch.currentSet}`;
+  renderSetPips('homeSetPips', currentMatch.homeSets, 'home-pip');
+  renderSetPips('awaySetPips', currentMatch.awaySets, 'away-pip');
+  console.log('updateScoreboard: About to call updateSetScoresDisplay');
+  updateSetScoresDisplay();
+  console.log('updateScoreboard: Finished');
+}
+
+function renderSetPips(elId, won, cls) {
+  const el = document.getElementById(elId);
+  const total = Math.ceil(currentMatch.maxSets / 2) + 1;
+  el.innerHTML = '';
+  for (let i = 0; i < Math.ceil(currentMatch.maxSets / 2) + 0; i++) {
+    const pip = document.createElement('div');
+    pip.className = `set-pip ${cls}` + (i < won ? ' won' : '');
+    el.appendChild(pip);
+  }
+}
+
+function updateSetScoresDisplay() {
+  if (!currentMatch) {
+    console.log('updateSetScoresDisplay: No current match');
+    return;
+  }
+  const container = document.getElementById('setScoresDisplay');
+  if (!container) {
+    console.log('updateSetScoresDisplay: Container not found');
+    return;
+  }
+  
+  console.log('updateSetScoresDisplay: setHistory =', currentMatch.setHistory);
+  
+  if (currentMatch.setHistory.length === 0) {
+    container.style.display = 'none';
+    console.log('updateSetScoresDisplay: No set history, hiding container');
+    return;
+  }
+  
+  container.style.display = 'block';
+  container.innerHTML = '';
+  console.log('updateSetScoresDisplay: Showing container with', currentMatch.setHistory.length, 'sets');
+  
+  currentMatch.setHistory.forEach((set, idx) => {
+    const setScore = document.createElement('div');
+    setScore.className = 'set-score-item';
+    setScore.innerHTML = `
+      <span class="set-num">S${set.set}</span>
+      <span class="set-score-val">${set.homeScore}–${set.awayScore}</span>
+    `;
+    container.appendChild(setScore);
+    console.log(`updateSetScoresDisplay: Added set ${set.set}: ${set.homeScore}-${set.awayScore}`);
+  });
+}
+
+function buildRotationButtons() {
+  // Update labels
+  document.getElementById('homeRotLabel').textContent = currentMatch.homeTeam.substring(0, 4).toUpperCase();
+  document.getElementById('awayRotLabel').textContent = currentMatch.awayTeam.substring(0, 4).toUpperCase();
+  
+  // Home rotation buttons
+  const homeContainer = document.getElementById('homeRotButtons');
+  homeContainer.innerHTML = '';
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'rotation-btn' + (i === homeRotation ? ' active' : '');
+    btn.textContent = i;
+    btn.onclick = () => setRotation('home', i);
+    homeContainer.appendChild(btn);
+  }
+  
+  // Away rotation buttons
+  const awayContainer = document.getElementById('awayRotButtons');
+  awayContainer.innerHTML = '';
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'rotation-btn away' + (i === awayRotation ? ' active' : '');
+    btn.textContent = i;
+    btn.onclick = () => setRotation('away', i);
+    awayContainer.appendChild(btn);
+  }
+}
+
+function setRotation(team, rotation) {
+  if (team === 'home') homeRotation = rotation;
+  else awayRotation = rotation;
+  buildRotationButtons();
+  console.log(`Rotation changed: ${team} = ${rotation}`);
+}
+
+function buildPlayerChips() {
+  const el = document.getElementById('playerChips');
+  el.innerHTML = '';
+
+  // Home players
+  homePlayers.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'player-chip';
+    chip.dataset.id = p.id;
+    chip.innerHTML = `<div class="chip-num">${p.num}</div><div class="chip-name">${p.name}</div><div class="chip-pos">${p.pos}</div>`;
+    chip.onclick = () => selectPlayer(p.id, false);
+    el.appendChild(chip);
+  });
+
+  // Divider
+  const div = document.createElement('div');
+  div.className = 'team-divider';
+  div.innerHTML = '<div class="team-divider-line"></div>';
+  el.appendChild(div);
+
+  // Away players
+  awayPlayers.forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'player-chip away-chip';
+    chip.dataset.id = p.id;
+    chip.innerHTML = `<div class="chip-num">${p.num}</div><div class="chip-name">${p.name}</div><div class="chip-pos">${p.pos}</div>`;
+    chip.onclick = () => selectPlayer(p.id, true);
+    el.appendChild(chip);
+  });
+}
+
+function selectPlayer(id, isAway) {
+  selectedPlayerId = id;
+  selectedAction = null;
+  selectedOutcome = null;
+  document.querySelectorAll('.player-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`[data-id="${id}"]`).classList.add('selected');
+  document.getElementById('noPlayerMsg').style.display = 'none';
+  document.getElementById('actionArea').style.display = '';
+  document.getElementById('outcomeArea').style.display = 'none';
+  document.getElementById('logEventBtn').disabled = true;
+  // Reset action buttons
+  document.querySelectorAll('.action-btn').forEach(b => b.style.opacity = '1');
+  document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('selected-outcome'));
+}
+
+function buildActionGrid() {
+  const grid = document.getElementById('actionGrid');
+  grid.innerHTML = '';
+  ACTION_DEFS.forEach(def => {
+    const btn = document.createElement('button');
+    btn.className = `action-btn ${def.cls}`;
+    btn.dataset.action = def.key;
+    btn.innerHTML = `<div class="a-icon">${def.icon}</div><div class="a-label">${def.label}</div>`;
+    btn.onclick = () => selectAction(def.key, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAction(action, btn) {
+  if (!selectedPlayerId) return;
+  selectedAction = action;
+  selectedOutcome = null;
+  selectedDetail = null;
+  document.querySelectorAll('.action-btn').forEach(b => b.style.opacity = '0.4');
+  btn.style.opacity = '1';
+  btn.style.transform = 'scale(0.96)';
+  setTimeout(() => btn.style.transform = '', 100);
+  document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('selected-outcome'));
+  
+  // Show detail area for attack or serve
+  if (action === 'attack') {
+    buildDetailGrid(ATTACK_TYPES, 'ATTACK TYPE');
+    document.getElementById('detailArea').style.display = '';
+    document.getElementById('outcomeArea').style.display = 'none';
+    document.getElementById('logEventBtn').disabled = true;
+  } else if (action === 'serve') {
+    buildDetailGrid(SERVE_TYPES, 'SERVE TYPE');
+    document.getElementById('detailArea').style.display = '';
+    document.getElementById('outcomeArea').style.display = 'none';
+    document.getElementById('logEventBtn').disabled = true;
+  } else {
+    document.getElementById('detailArea').style.display = 'none';
+    document.getElementById('outcomeArea').style.display = '';
+    document.getElementById('logEventBtn').disabled = true;
+  }
+}
+
+function buildDetailGrid(types, label) {
+  document.getElementById('detailAreaLabel').textContent = label;
+  const grid = document.getElementById('detailGrid');
+  grid.innerHTML = '';
+  types.forEach(type => {
+    const btn = document.createElement('button');
+    btn.className = 'detail-btn';
+    btn.innerHTML = `<div class="detail-icon">${type.icon}</div><div class="detail-label">${type.label}</div>`;
+    btn.onclick = () => selectDetail(type.key, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectDetail(detail, btn) {
+  selectedDetail = detail;
+  document.querySelectorAll('.detail-btn').forEach(b => b.classList.remove('selected-detail'));
+  btn.classList.add('selected-detail');
+  document.getElementById('outcomeArea').style.display = '';
+  document.getElementById('logEventBtn').disabled = true;
+  console.log('Detail selected:', detail);
+}
+
+function selectOutcome(outcome) {
+  selectedOutcome = outcome;
+  document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('selected-outcome'));
+  event.target.classList.add('selected-outcome');
+  
+  // Only enable log button if detail is selected when required, or not required at all
+  const needsDetail = (selectedAction === 'attack' || selectedAction === 'serve');
+  if (needsDetail && !selectedDetail) {
+    document.getElementById('logEventBtn').disabled = true;
+  } else {
+    document.getElementById('logEventBtn').disabled = false;
+  }
+}
+
+// ── SCORE CONTROLS ──
+async function addPoint(team) {
+  if (!currentMatch) return;
+  if (team === 'home') currentMatch.homeScore++;
+  else currentMatch.awayScore++;
+
+  const event = {
+    matchId: currentMatch.id,
+    type: 'score',
+    team,
+    action: 'point',
+    outcome: 'point',
+    playerId: null,
+    playerName: null,
+    set: currentMatch.currentSet,
+    scoreHome: currentMatch.homeScore,
+    scoreAway: currentMatch.awayScore,
+    ts: new Date().toISOString(),
+  };
+  await dbAdd('events', event);
+  await dbPut('matches', currentMatch);
+  updateScoreboard();
+  toast(`${team === 'home' ? currentMatch.homeTeam : currentMatch.awayTeam} +1`, false, 800);
+}
+
+// ── LOG ACTION ──
+async function logEvent() {
+  if (!selectedPlayerId || !selectedAction || !selectedOutcome) return;
+
+  const allPlayers = [...homePlayers, ...awayPlayers];
+  const player = allPlayers.find(p => p.id === selectedPlayerId);
+  if (!player) return;
+
+  const ev = {
+    matchId: currentMatch.id,
+    type: 'action',
+    team: player.team,
+    playerId: player.id,
+    playerNum: player.num,
+    playerName: player.name,
+    playerPos: player.pos,
+    action: selectedAction,
+    outcome: selectedOutcome,
+    detail: selectedDetail || null, // attack type or serve type
+    rotation: player.team === 'home' ? homeRotation : awayRotation,
+    set: currentMatch.currentSet,
+    scoreHome: currentMatch.homeScore,
+    scoreAway: currentMatch.awayScore,
+    ts: new Date().toISOString(),
+  };
+
+  await dbAdd('events', ev);
+
+  // Feedback
+  const outcomeLabels = { good: 'GOOD ✓', ok: 'OK ~', bad: 'ERROR ✗' };
+  const detailText = selectedDetail ? ` (${selectedDetail.toUpperCase()})` : '';
+  toast(`${player.name} — ${selectedAction.toUpperCase()}${detailText} ${outcomeLabels[selectedOutcome]}`);
+
+  // Reset action state but keep player selected
+  selectedAction = null;
+  selectedOutcome = null;
+  selectedDetail = null;
+  document.querySelectorAll('.action-btn').forEach(b => b.style.opacity = '1');
+  document.querySelectorAll('.outcome-btn').forEach(b => b.classList.remove('selected-outcome'));
+  document.querySelectorAll('.detail-btn').forEach(b => b.classList.remove('selected-detail'));
+  document.getElementById('detailArea').style.display = 'none';
+  document.getElementById('outcomeArea').style.display = 'none';
+  document.getElementById('logEventBtn').disabled = true;
+}
+
+// ── END SET ──
+async function endSet() {
+  if (!currentMatch) return;
+
+  const homeScore = currentMatch.homeScore;
+  const awayScore = currentMatch.awayScore;
+  const maxScore = Math.max(homeScore, awayScore);
+  const minScore = Math.min(homeScore, awayScore);
+  const scoreDiff = Math.abs(homeScore - awayScore);
+  
+  console.log('endSet called:', { homeScore, awayScore, maxScore, scoreDiff, currentSet: currentMatch.currentSet });
+  
+  // Validation: set must end with at least 25 points (or 15 for deciding set in best of 5)
+  const isDecidingSet = currentMatch.currentSet === currentMatch.maxSets;
+  const minPoints = isDecidingSet ? 15 : 25;
+  
+  // Check if set is valid to end
+  if (maxScore < minPoints) {
+    console.log('endSet: Failed - max score too low:', maxScore, '<', minPoints);
+    toast(`Set must reach ${minPoints} points first (currently ${maxScore})`, true, 3000);
+    return;
+  }
+  
+  if (scoreDiff < 2) {
+    console.log('endSet: Failed - score difference too small:', scoreDiff);
+    toast('Set must be won by 2 points minimum', true, 3000);
+    return;
+  }
+
+  console.log('endSet: Validation passed, showing modal');
+
+  showModal(
+    `End Set ${currentMatch.currentSet}?`,
+    `Score: ${currentMatch.homeTeam} ${currentMatch.homeScore} – ${currentMatch.awayScore} ${currentMatch.awayTeam}`,
+    async () => {
+      console.log('endSet: Modal confirmed');
+      const winner = currentMatch.homeScore > currentMatch.awayScore ? 'home' : 'away';
+      const setData = {
+        set: currentMatch.currentSet,
+        homeScore: currentMatch.homeScore,
+        awayScore: currentMatch.awayScore,
+        winner,
+      };
+      console.log('endSet: Pushing to setHistory:', setData);
+      currentMatch.setHistory.push(setData);
+      console.log('endSet: setHistory is now:', currentMatch.setHistory);
+      
+      if (winner === 'home') currentMatch.homeSets++;
+      else currentMatch.awaySets++;
+
+      const winsNeeded = Math.ceil(currentMatch.maxSets / 2);
+      if (currentMatch.homeSets === winsNeeded || currentMatch.awaySets === winsNeeded) {
+        console.log('endSet: Match complete!');
+        currentMatch.status = 'complete';
+        currentMatch.endedAt = new Date().toISOString();
+        await dbPut('matches', currentMatch);
+        console.log('endSet: Calling updateScoreboard after match complete');
+        updateScoreboard(); // Update UI after DB save
+        toast('🎉 Match complete!');
+      } else {
+        console.log('endSet: Moving to next set');
+        currentMatch.currentSet++;
+        currentMatch.homeScore = 0;
+        currentMatch.awayScore = 0;
+        await dbPut('matches', currentMatch);
+        console.log('endSet: Calling updateScoreboard after set end, new scores:', currentMatch.homeScore, currentMatch.awayScore);
+        updateScoreboard(); // Update UI after DB save - this will reset scores and show set history
+        toast(`Set ${currentMatch.currentSet - 1} ended. Set ${currentMatch.currentSet} starting.`);
+      }
+    }
+  );
+}
+
+// ── UNDO ──
+async function undoLastEvent() {
+  const all = await dbGetByIndex('events', 'matchId', currentMatch.id);
+  if (!all.length) { toast('Nothing to undo', true); return; }
+  const last = all[all.length - 1];
+
+  if (last.type === 'score') {
+    if (last.team === 'home' && currentMatch.homeScore > 0) currentMatch.homeScore--;
+    else if (last.team === 'away' && currentMatch.awayScore > 0) currentMatch.awayScore--;
+    await dbPut('matches', currentMatch);
+    updateScoreboard();
+  }
+
+  // Delete last event using its auto-generated id key
+  await new Promise((res, rej) => {
+    const tx = db.transaction('events', 'readwrite');
+    const store = tx.objectStore('events');
+    // Use a cursor on the index to find and delete the last record for this match
+    const index = store.index('matchId');
+    const req = index.openCursor(currentMatch.id, 'prev');
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) {
+        cursor.delete();
+        res();
+      } else {
+        res();
+      }
+    };
+    req.onerror = () => rej(req.error);
+  });
+  toast('Undone ↩');
+}
+
+// ════════════════════════════════════════════════
+// LOG PAGE
+// ════════════════════════════════════════════════
+async function refreshLog() {
+  if (!currentMatch) {
+    document.getElementById('logMatchTitle').textContent = 'No match in progress';
+    document.getElementById('eventLog').innerHTML = '<div style="color:var(--muted);padding:20px">Start a match to see the log.</div>';
+    document.getElementById('statCards').innerHTML = '';
+    document.getElementById('perfBody').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('logMatchTitle').textContent =
+    `${currentMatch.homeTeam} vs ${currentMatch.awayTeam} · Set ${currentMatch.currentSet}`;
+
+  const events = await dbGetByIndex('events', 'matchId', currentMatch.id);
+  renderStatCards(events);
+  renderEventLog(events);
+  renderPerfTable(events);
+}
+
+function renderStatCards(events) {
+  const actions = events.filter(e => e.type === 'action');
+  const kills   = actions.filter(e => e.action === 'kill' || (e.action === 'attack' && e.outcome === 'good')).length;
+  const errors  = actions.filter(e => e.outcome === 'bad').length;
+  const total   = actions.length;
+
+  document.getElementById('statCards').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-card-label">TOTAL ACTIONS</div>
+      <div class="stat-card-val">${total}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">KILLS / ACES</div>
+      <div class="stat-card-val volt">${kills}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">ERRORS</div>
+      <div class="stat-card-val fire">${errors}</div>
+    </div>`;
+}
+
+function filterLog(type, btn) {
+  logFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  refreshLog();
+}
+
+function renderEventLog(events) {
+  const el = document.getElementById('eventLog');
+  let filtered = [...events].reverse();
+  if (logFilter !== 'all') filtered = filtered.filter(e => e.action === logFilter);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--muted);padding:16px;text-align:center">No events yet</div>';
+    return;
+  }
+
+  el.innerHTML = '';
+  filtered.slice(0, 60).forEach(ev => {
+    const item = document.createElement('div');
+    item.className = 'event-item';
+    const def = ACTION_DEFS.find(d => d.key === ev.action) || {icon:'•'};
+    const iconColor = ACTION_ICON_COLORS[ev.action] || '#8aafc8';
+    const dotCls = ev.outcome === 'good' ? 'dot-good' : ev.outcome === 'bad' ? 'dot-bad' : 'dot-ok';
+    const teamColor = ev.team === 'home' ? 'var(--volt)' : 'var(--sky)';
+    const scoreStr = ev.scoreHome !== undefined ? `${ev.scoreHome}–${ev.scoreAway}` : '';
+    const timeStr  = ev.ts ? new Date(ev.ts).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}) : '';
+
+    if (ev.type === 'substitution') {
+      item.innerHTML = `
+        <div class="event-icon" style="background:rgba(187,136,255,0.1)">
+          <span style="color:var(--c-set);font-size:16px">↔</span>
+        </div>
+        <div class="event-body">
+          <div class="event-action" style="color:${teamColor}">SUB — #${ev.playerOutNum} ${ev.playerOut} ↔ #${ev.playerInNum} ${ev.playerIn}</div>
+          <div class="event-detail">Set ${ev.set}</div>
+        </div>
+        <div class="event-score">${scoreStr}<small>${timeStr}</small></div>`;
+    } else if (ev.type === 'score') {
+      item.innerHTML = `
+        <div class="event-icon" style="background:${ev.team==='home'?'rgba(255,224,51,0.1)':'rgba(51,204,255,0.1)'}">
+          <span style="color:${teamColor};font-size:14px;font-weight:800">+1</span>
+        </div>
+        <div class="event-body">
+          <div class="event-action" style="color:${teamColor}">POINT — ${ev.team === 'home' ? currentMatch.homeTeam : currentMatch.awayTeam}</div>
+          <div class="event-detail">Set ${ev.set}</div>
+        </div>
+        <div class="event-score">${scoreStr}<small>${timeStr}</small></div>`;
+    } else {
+      const detailText = ev.detail ? ` · ${ev.detail.toUpperCase()}` : '';
+      const rotText = ev.rotation ? ` · Rot ${ev.rotation}` : '';
+      item.innerHTML = `
+        <div class="event-icon" style="background:${ACTION_COLORS[ev.action]||'rgba(138,175,200,0.1)'}">
+          <span style="font-size:18px">${def.icon}</span>
+        </div>
+        <div class="event-body">
+          <div class="event-action">
+            <span class="outcome-dot ${dotCls}"></span>
+            ${(ev.action||'').toUpperCase()} <span style="color:${teamColor};font-size:13px">#${ev.playerNum} ${ev.playerName}</span>
+          </div>
+          <div class="event-detail">${ev.playerPos} · Set ${ev.set}${detailText}${rotText} · ${ev.outcome?.toUpperCase()}</div>
+        </div>
+        <div class="event-score">${scoreStr}<small>${timeStr}</small></div>`;
+    }
+    el.appendChild(item);
+  });
+}
+
+function renderPerfTable(events) {
+  const allP = [...homePlayers, ...awayPlayers];
+  const body = document.getElementById('perfBody');
+  body.innerHTML = '';
+
+  allP.forEach(p => {
+    const pEvents = events.filter(e => e.playerId === p.id && e.type === 'action');
+    const count = (action) => pEvents.filter(e => e.action === action).length;
+    const good  = (action) => pEvents.filter(e => e.action === action && e.outcome === 'good').length;
+    const bad   = (action) => pEvents.filter(e => e.action === action && e.outcome === 'bad').length;
+    const kills = good('attack') + count('kill');
+    const atk   = count('attack') + count('kill');
+    const srvErr = bad('serve');
+    const aces  = good('serve') + count('ace');
+    const srvTotal = count('serve') + count('ace');
+    const numBadge = p.team === 'home' ? `<span class="p-num-badge">${p.num}</span>` : `<span class="p-num-badge away">${p.num}</span>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="p-name">${numBadge}${p.name} <span style="font-size:10px;color:var(--muted)">${p.pos}</span></span></td>
+      <td>${atk}</td>
+      <td style="color:var(--volt);font-weight:600">${kills}</td>
+      <td style="color:var(--fire)">${bad('attack')}</td>
+      <td>${srvTotal}</td>
+      <td style="color:var(--gold);font-weight:600">${aces}</td>
+      <td style="color:var(--sky)">${count('block')}</td>
+      <td style="color:var(--green)">${count('dig')}</td>
+      <td>${count('receive')}</td>
+      <td style="color:var(--c-set)">${count('set')}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+// ════════════════════════════════════════════════
+// HISTORY PAGE
+// ════════════════════════════════════════════════
+async function refreshHistory() {
+  const all = await dbGetAll('matches');
+  const el = document.getElementById('matchHistoryList');
+
+  if (!all.length) {
+    el.innerHTML = '<div class="no-matches">No matches recorded yet</div>';
+    return;
+  }
+
+  all.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  el.innerHTML = '';
+  all.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    const date = new Date(m.startedAt).toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const sets = m.setHistory.map(s => `${s.homeScore}–${s.awayScore}`).join(', ') || '—';
+
+    card.innerHTML = `
+      <div class="match-card-header">
+        <div class="match-date">${date} · ${m.competition || 'FIVB'}</div>
+        <div class="match-status ${m.status==='complete'?'status-complete':'status-ongoing'}">
+          ${m.status === 'complete' ? '✓ COMPLETE' : '● ONGOING'}
+        </div>
+      </div>
+      <div class="match-teams">
+        <span class="match-home">${m.homeTeam}</span>
+        <span class="match-score-disp">${m.homeSets}–${m.awaySets}</span>
+        <span class="match-away">${m.awayTeam}</span>
+      </div>
+      <div class="match-sets-summary">Sets: ${sets} · ${m.maxSets === 5 ? 'Best of 5' : 'Best of 3'}</div>`;
+
+    card.onclick = () => loadHistoryMatch(m);
+    el.appendChild(card);
+  });
+}
+
+async function loadHistoryMatch(m) {
+  currentMatch = m;
+  homePlayers  = m.homePlayers;
+  awayPlayers  = m.awayPlayers;
+  maxSets = m.maxSets;
+  showTabDirect('log');
+  await refreshLog();
+}
+
+// ════════════════════════════════════════════════
+// EXPORT CSV
+// ════════════════════════════════════════════════
+async function exportCSV() {
+  if (!currentMatch) { toast('No match loaded', true); return; }
+  const events = await dbGetByIndex('events', 'matchId', currentMatch.id);
+  const actionEvents = events.filter(e => e.type === 'action');
+
+  if (!actionEvents.length) {
+    toast('No actions logged yet — record some actions first', true);
+    return;
+  }
+
+  const rows = [['Match','Set','Time','Team','Player#','Player','Position','Action','Detail','Outcome','Rotation','HomeScore','AwayScore']];
+
+  actionEvents.forEach(e => {
+    rows.push([
+      `${currentMatch.homeTeam} vs ${currentMatch.awayTeam}`,
+      e.set ?? '', e.ts ?? '', e.team ?? '', e.playerNum ?? '',
+      e.playerName ?? '', e.playerPos ?? '',
+      e.action ?? '', e.detail ?? '', e.outcome ?? '', e.rotation ?? '',
+      e.scoreHome ?? '', e.scoreAway ?? ''
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `${currentMatch.homeTeam}_vs_${currentMatch.awayTeam}.csv`.replace(/\s+/g,'_');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`✓ Exported ${actionEvents.length} actions`);
+}
+
+// ════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════
+let modalCallback = null;
+function showModal(title, body, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').textContent = body;
+  modalCallback = onConfirm;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  modalCallback = null;
+}
+document.getElementById('modalConfirm').onclick = async () => {
+  const callback = modalCallback;
+  closeModal();
+  if (callback) await callback();
+};
+
+// ════════════════════════════════════════════════
+// SUBSTITUTION MODAL
+// ════════════════════════════════════════════════
+function showSubstitutionModal() {
+  if (!currentMatch) return;
+  
+  const allPlayers = [...homePlayers, ...awayPlayers];
+  const outSelect = document.getElementById('subPlayerOut');
+  const inSelect = document.getElementById('subPlayerIn');
+  
+  outSelect.innerHTML = '<option value="">Select player...</option>';
+  inSelect.innerHTML = '<option value="">Select player...</option>';
+  
+  allPlayers.forEach(p => {
+    const opt1 = document.createElement('option');
+    opt1.value = p.id;
+    opt1.textContent = `#${p.num} ${p.name} (${p.team === 'home' ? currentMatch.homeTeam : currentMatch.awayTeam})`;
+    outSelect.appendChild(opt1);
+    
+    const opt2 = document.createElement('option');
+    opt2.value = p.id;
+    opt2.textContent = `#${p.num} ${p.name} (${p.team === 'home' ? currentMatch.homeTeam : currentMatch.awayTeam})`;
+    inSelect.appendChild(opt2);
+  });
+  
+  document.getElementById('subModal').classList.add('open');
+}
+
+function closeSubModal() {
+  document.getElementById('subModal').classList.remove('open');
+}
+
+async function confirmSubstitution() {
+  const outId = document.getElementById('subPlayerOut').value;
+  const inId = document.getElementById('subPlayerIn').value;
+  
+  if (!outId || !inId) {
+    toast('Please select both players', true);
+    return;
+  }
+  
+  if (outId === inId) {
+    toast('Cannot substitute player with themselves', true);
+    return;
+  }
+  
+  const allPlayers = [...homePlayers, ...awayPlayers];
+  const outPlayer = allPlayers.find(p => p.id === outId);
+  const inPlayer = allPlayers.find(p => p.id === inId);
+  
+  if (outPlayer.team !== inPlayer.team) {
+    toast('Players must be from the same team', true);
+    return;
+  }
+  
+  // Log substitution event
+  const ev = {
+    matchId: currentMatch.id,
+    type: 'substitution',
+    team: outPlayer.team,
+    playerOut: outPlayer.name,
+    playerOutNum: outPlayer.num,
+    playerIn: inPlayer.name,
+    playerInNum: inPlayer.num,
+    set: currentMatch.currentSet,
+    scoreHome: currentMatch.homeScore,
+    scoreAway: currentMatch.awayScore,
+    ts: new Date().toISOString(),
+  };
+  
+  await dbAdd('events', ev);
+  toast(`SUB: ${outPlayer.name} ↔ ${inPlayer.name}`);
+  closeSubModal();
+  console.log('Substitution logged:', ev);
+}
+
+// ════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, isError=false, dur=2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (isError ? ' error' : '') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ════════════════════════════════════════════════
+// OFFLINE DETECTION
+// ════════════════════════════════════════════════
+function updateOnlineStatus() {
+  const dot = document.getElementById('offlineIndicator');
+  const banner = document.getElementById('offlineBanner');
+  if (navigator.onLine) {
+    dot.classList.remove('offline');
+    banner.classList.remove('show');
+  } else {
+    dot.classList.add('offline');
+    banner.classList.add('show');
+  }
+}
+window.addEventListener('online',  updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ════════════════════════════════════════════════
+// SERVICE WORKER REGISTRATION (offline caching)
+// ════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  // Inline service worker via blob
+  const swCode = `
+const CACHE = 'court-vb-v1';
+const ASSETS = [self.location.href];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+  );
+});`;
+  const swBlob = new Blob([swCode], {type: 'application/javascript'});
+  const swURL  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ════════════════════════════════════════════════
+// MOBILE OPTIMIZATIONS
+// ════════════════════════════════════════════════
+// Prevent double-tap zoom on iOS
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+
+// Prevent iOS Safari bounce scroll
+document.body.addEventListener('touchmove', (e) => {
+  if (e.target.closest('.page, .player-scroll, .action-grid-wrap, .event-log')) {
+    return; // Allow scrolling in these containers
+  }
+  e.preventDefault();
+}, { passive: false });
+
+// Haptic feedback function (iOS Safari)
+function haptic(style = 'medium') {
+  if (navigator.vibrate) {
+    // Android vibration
+    if (style === 'light') navigator.vibrate(10);
+    else if (style === 'medium') navigator.vibrate(20);
+    else if (style === 'heavy') navigator.vibrate(40);
+  }
+  // iOS haptics are not available in web apps unfortunately
+}
+
+// Add haptic feedback to buttons
+function addHapticToButton(selector) {
+  document.addEventListener('click', (e) => {
+    if (e.target.closest(selector)) {
+      haptic('light');
+    }
+  }, { passive: true });
+}
+
+// Performance optimization: Use passive event listeners
+const makePassive = () => {
+  document.addEventListener('touchstart', () => {}, { passive: true });
+  document.addEventListener('touchmove', () => {}, { passive: true });
+};
+makePassive();
+
+// Mobile-specific: Auto-hide address bar on scroll
+let lastScrollY = 0;
+const hideAddressBar = () => {
+  if (window.scrollY > lastScrollY) {
+    window.scrollTo(0, 1);
+  }
+  lastScrollY = window.scrollY;
+};
+window.addEventListener('scroll', hideAddressBar, { passive: true });
+
+// Optimize scrolling performance
+const optimizeScrolling = () => {
+  const scrollContainers = document.querySelectorAll('.player-scroll, .action-grid-wrap, .event-log');
+  scrollContainers.forEach(container => {
+    if (container) {
+      container.style.willChange = 'scroll-position';
+      // Remove will-change after scrolling stops
+      let scrollTimeout;
+      container.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          container.style.willChange = 'auto';
+        }, 150);
+      }, { passive: true });
+    }
+  });
+};
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+(async () => {
+  await openDB();
+  renderRosterRows();
+  
+  // Mobile optimizations
+  optimizeScrolling();
+  addHapticToButton('.btn-primary, .btn-secondary, .score-btn, .action-btn, .outcome-btn');
+
+  // Wire team name inputs to update roster labels live
+  document.getElementById('homeTeamName').addEventListener('input', () => {
+    document.getElementById('homeRosterLabel').textContent =
+      (document.getElementById('homeTeamName').value || 'HOME') + ' ROSTER';
+  });
+  document.getElementById('awayTeamName').addEventListener('input', () => {
+    document.getElementById('awayRosterLabel').textContent =
+      (document.getElementById('awayTeamName').value || 'AWAY') + ' ROSTER';
+  });
+  
+  // Console log for debugging
+  console.log('COURT Volleyball Scout - Mobile Optimized v2.1');
+  console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
+  console.log('Device pixel ratio:', window.devicePixelRatio);
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     ZVA LIVE BRIDGE  –  injects when ?zva_match=<id> is set
+     Syncs scores & events to ZVA Supabase in real-time
+     ══════════════════════════════════════════════════════════ -->
+<script>
+(function ZVA_BRIDGE() {
+  const params   = new URLSearchParams(location.search);
+  const MATCH_ID = params.get('zva_match');
+  if (!MATCH_ID) return; // standalone mode — do nothing
+
+  const BASE = location.origin;
+  let zvaBadge, zvaMatchData = null;
+
+  // ── Position mapping (ZVA long → COURT short) ──────────────────────
+  const POS_MAP = {
+    setter: 'S', outside_hitter: 'OH', middle_blocker: 'MB',
+    opposite: 'OPP', libero: 'LIB', defensive_specialist: 'DS',
+  };
+
+  // ── Inject ZVA status badge into topbar ──────────────────────────────
+  function injectBadge() {
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return;
+    zvaBadge = document.createElement('div');
+    zvaBadge.id = 'zva-badge';
+    zvaBadge.style.cssText = [
+      'display:flex;align-items:center;gap:6px;padding:4px 10px',
+      'background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.3)',
+      'border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.5px',
+      'color:#00ff88;cursor:default;transition:all .3s',
+    ].join(';');
+    zvaBadge.innerHTML = '<span id="zva-dot" style="width:7px;height:7px;border-radius:50%;background:#00ff88;animation:zvaPulse 1.5s ease infinite"></span><span id="zva-status">ZVA CONNECTING…</span>';
+    topbar.appendChild(zvaBadge);
+
+    const style = document.createElement('style');
+    style.textContent = '@keyframes zvaPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(0.85)}}';
+    document.head.appendChild(style);
+  }
+
+  function setBadge(text, color) {
+    if (!zvaBadge) return;
+    const dot = zvaBadge.querySelector('#zva-dot');
+    const lbl = zvaBadge.querySelector('#zva-status');
+    if (lbl) lbl.textContent = text;
+    zvaBadge.style.color        = color;
+    zvaBadge.style.borderColor  = color + '55';
+    zvaBadge.style.background   = color + '18';
+    if (dot) dot.style.background = color;
+  }
+
+  // ── "Load ZVA Match" banner on SETUP page ────────────────────────────
+  function injectLoadBanner(data) {
+    const setupPage = document.querySelector('.setup-page');
+    if (!setupPage) return;
+
+    const { match, home_team, away_team } = data;
+    const banner = document.createElement('div');
+    banner.id   = 'zva-load-banner';
+    banner.style.cssText = [
+      'background:linear-gradient(135deg,rgba(0,255,136,.08),rgba(51,204,255,.08))',
+      'border:1px solid rgba(0,255,136,.35);border-radius:12px;padding:16px 18px',
+      'margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px',
+    ].join(';');
+    const matchDate = match.scheduled_at
+      ? new Date(match.scheduled_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+      : '';
+    banner.innerHTML = `
+      <div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#00ff88;margin-bottom:4px">⚡ ZVA MATCH LINKED</div>
+        <div style="font-size:14px;font-weight:700;color:#e0e8f0">${home_team.short_name} vs ${away_team.short_name}</div>
+        <div style="font-size:11px;color:#7a9ab8;margin-top:2px">${match.tournament?.short_name || 'ZVA League'} · ${matchDate}</div>
+      </div>
+      <button id="zva-load-btn" style="flex-shrink:0;background:#00ff88;color:#0a0f14;border:none;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;cursor:pointer">LOAD ROSTER</button>`;
+    setupPage.insertBefore(banner, setupPage.firstChild);
+
+    document.getElementById('zva-load-btn').onclick = () => applyZvaData(data);
+  }
+
+  // ── Pre-fill SETUP form with ZVA roster data ──────────────────────────
+  function applyZvaData(data) {
+    const { match, home_team, away_team, home_players, away_players } = data;
+
+    const homeInput = document.getElementById('homeTeamName');
+    const awayInput = document.getElementById('awayTeamName');
+    const compInput = document.getElementById('competitionName');
+    if (homeInput) { homeInput.value = home_team.short_name; homeInput.dispatchEvent(new Event('input')); }
+    if (awayInput) { awayInput.value = away_team.short_name; awayInput.dispatchEvent(new Event('input')); }
+    if (compInput) compInput.value = match.tournament?.short_name || 'ZVA League';
+
+    if (home_players && home_players.length) {
+      homeRosterRows.length = 0;
+      home_players.forEach(p => homeRosterRows.push({
+        num:    String(p.number || (homeRosterRows.length + 1)),
+        name:   (p.first_name + ' ' + p.last_name).trim(),
+        pos:    POS_MAP[p.position] || 'OH',
+        zva_id: p.id,
+      }));
+    }
+    if (away_players && away_players.length) {
+      awayRosterRows.length = 0;
+      away_players.forEach(p => awayRosterRows.push({
+        num:    String(p.number || (awayRosterRows.length + 1)),
+        name:   (p.first_name + ' ' + p.last_name).trim(),
+        pos:    POS_MAP[p.position] || 'OH',
+        zva_id: p.id,
+      }));
+    }
+    renderRosterRows();
+
+    const banner = document.getElementById('zva-load-banner');
+    if (banner) banner.remove();
+    toast('✓ ZVA roster loaded — tap Start Match to begin!');
+    setBadge('ZVA LIVE', '#00ff88');
+  }
+
+  // ── Fire-and-forget POST helper ───────────────────────────────────────
+  function zvaPost(path, body) {
+    fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => {});
+  }
+
+  // ── Patch addPoint → sync score to Supabase Realtime ─────────────────
+  const _origAddPoint = addPoint;
+  window.addPoint = async function(team) {
+    await _origAddPoint.call(this, team);
+    if (!currentMatch) return;
+    zvaPost('/api/scout/score', {
+      match_id:    MATCH_ID,
+      home_score:  currentMatch.homeScore,
+      away_score:  currentMatch.awayScore,
+      current_set: currentMatch.currentSet,
+      home_sets:   currentMatch.homeSets,
+      away_sets:   currentMatch.awaySets,
+    });
+  };
+
+  // ── Patch logEvent → relay stat event to ZVA ─────────────────────────
+  const _origLogEvent = logEvent;
+  window.logEvent = async function() {
+    const capPlayerId = selectedPlayerId;
+    const capAction   = selectedAction;
+    const capOutcome  = selectedOutcome;
+    const capDetail   = selectedDetail;
+
+    await _origLogEvent.call(this);
+
+    if (!currentMatch || !capPlayerId || !capAction) return;
+    const allP   = [...homePlayers, ...awayPlayers];
+    const player = allP.find(p => p.id === capPlayerId);
+    if (!player) return;
+
+    zvaPost('/api/scout/event', {
+      match_id:     MATCH_ID,
+      type:         'action',
+      team:         player.team,
+      player_num:   player.num,
+      player_name:  player.name,
+      player_pos:   player.pos,
+      player_zva_id: player.zva_id || null,
+      action:       capAction,
+      outcome:      capOutcome,
+      detail:       capDetail || null,
+      set:          currentMatch.currentSet,
+      score_home:   currentMatch.homeScore,
+      score_away:   currentMatch.awayScore,
+      ts:           new Date().toISOString(),
+    });
+  };
+
+  // ── Patch showModal → capture set-end confirmation ───────────────────
+  const _origShowModal = showModal;
+  window.showModal = function(title, body, onConfirm) {
+    if (title && title.toLowerCase().includes('end set')) {
+      const wrappedConfirm = async () => {
+        const capSet  = currentMatch ? currentMatch.currentSet  : null;
+        const capHome = currentMatch ? currentMatch.homeScore   : 0;
+        const capAway = currentMatch ? currentMatch.awayScore   : 0;
+
+        if (onConfirm) await onConfirm();
+
+        zvaPost('/api/scout/score', {
+          match_id:    MATCH_ID,
+          home_score:  0,
+          away_score:  0,
+          current_set: currentMatch ? currentMatch.currentSet : null,
+          home_sets:   currentMatch ? currentMatch.homeSets  : null,
+          away_sets:   currentMatch ? currentMatch.awaySets  : null,
+          set_ended:   { set: capSet, home: capHome, away: capAway },
+        });
+      };
+      return _origShowModal.call(this, title, body, wrappedConfirm);
+    }
+    return _origShowModal.call(this, title, body, onConfirm);
+  };
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    injectBadge();
+    setBadge('ZVA CONNECTING…', '#ffd700');
+
+    try {
+      const res = await fetch(`${BASE}/api/scout/match/${MATCH_ID}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      zvaMatchData = await res.json();
+      setBadge('ZVA READY', '#00ff88');
+      injectLoadBanner(zvaMatchData);
+    } catch (err) {
+      setBadge('ZVA ERROR', '#ff4444');
+      toast('⚠ ZVA: Could not load match data', true, 5000);
+      console.error('[ZVA Bridge]', err);
+    }
+  });
+
+  console.log('[ZVA Bridge] Initialised for match:', MATCH_ID);
+})();
+</script>
+</body>
+</html>

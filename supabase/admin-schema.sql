@@ -8,7 +8,7 @@
 -- =====================================================
 CREATE TABLE IF NOT EXISTS admin_users (
   user_id     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role        TEXT NOT NULL CHECK (role IN ('super_admin', 'team_admin')),
+  role        TEXT NOT NULL CHECK (role IN ('super_admin', 'team_admin', 'statistician')),
   team_id     UUID REFERENCES teams(id) ON DELETE SET NULL,
   is_active   BOOLEAN NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ DEFAULT now()
@@ -107,6 +107,54 @@ CREATE POLICY "Service role full access to system_events"
 CREATE INDEX idx_system_events_type ON system_events(type);
 CREATE INDEX idx_system_events_severity ON system_events(severity);
 CREATE INDEX idx_system_events_created ON system_events(created_at DESC);
+
+-- =====================================================
+-- ADD STATISTICIAN ROLE (run this if admin_users already exists)
+-- ALTER TABLE admin_users DROP CONSTRAINT admin_users_role_check;
+-- ALTER TABLE admin_users ADD CONSTRAINT admin_users_role_check
+--   CHECK (role IN ('super_admin', 'team_admin', 'statistician'));
+
+-- =====================================================
+-- SCOUT STAT EVENTS (granular per-action stats from COURT app)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS scout_stat_events (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  match_id     UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  player_id    UUID REFERENCES players(id) ON DELETE SET NULL,
+  team         TEXT NOT NULL CHECK (team IN ('home', 'away')),
+  player_num   TEXT,
+  player_name  TEXT,
+  player_pos   TEXT,
+  action       TEXT NOT NULL,   -- 'attack', 'serve', 'block', 'dig', 'receive', 'set', 'ace', 'kill'
+  outcome      TEXT NOT NULL CHECK (outcome IN ('good', 'ok', 'bad')),
+  detail       TEXT,            -- attack type or serve type
+  set_number   INTEGER,
+  score_home   INTEGER,
+  score_away   INTEGER,
+  recorded_by  UUID REFERENCES auth.users(id),
+  recorded_at  TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE scout_stat_events ENABLE ROW LEVEL SECURITY;
+
+-- Service role full access
+CREATE POLICY "Service role full access to scout_stat_events"
+  ON scout_stat_events FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- Admins/statisticians can read
+CREATE POLICY "Admin users can read scout events"
+  ON scout_stat_events FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE user_id = auth.uid() AND is_active = true
+    )
+  );
+
+CREATE INDEX idx_scout_events_match  ON scout_stat_events(match_id);
+CREATE INDEX idx_scout_events_player ON scout_stat_events(player_id);
+CREATE INDEX idx_scout_events_action ON scout_stat_events(action);
 
 -- =====================================================
 -- STORAGE BUCKET for O2 forms

@@ -35,9 +35,14 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isLoginPage = pathname === "/admin/login";
-  const isTeamPortal = pathname.startsWith("/admin/team");
+  const isAdminRoute  = pathname.startsWith("/admin");
+  const isLoginPage   = pathname === "/admin/login";
+  const isTeamPortal  = pathname.startsWith("/admin/team");
+  const isScoutRoute  = pathname.startsWith("/admin/scout");
+  const isCourtAsset  = pathname.startsWith("/court");
+
+  // /court/* is a static public folder — let it pass for iframe embedding
+  if (isCourtAsset) return supabaseResponse;
 
   // Redirect unauthenticated users away from admin
   if (isAdminRoute && !isLoginPage && !user) {
@@ -55,11 +60,22 @@ export async function proxy(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    if (adminRow && adminRow.is_active && adminRow.role === "team_admin" && !isTeamPortal) {
-      // Team admins can only access /admin/team/*
-      const teamUrl = request.nextUrl.clone();
-      teamUrl.pathname = "/admin/team";
-      return NextResponse.redirect(teamUrl);
+    if (adminRow && adminRow.is_active) {
+      const role = adminRow.role as string;
+
+      // Team admins → only /admin/team/*
+      if (role === "team_admin" && !isTeamPortal) {
+        const teamUrl = request.nextUrl.clone();
+        teamUrl.pathname = "/admin/team";
+        return NextResponse.redirect(teamUrl);
+      }
+
+      // Statisticians → only /admin/scout/* + /api/scout/*
+      if (role === "statistician" && !isScoutRoute) {
+        const scoutUrl = request.nextUrl.clone();
+        scoutUrl.pathname = "/admin/scout";
+        return NextResponse.redirect(scoutUrl);
+      }
     }
   }
 

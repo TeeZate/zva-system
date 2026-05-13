@@ -14,6 +14,7 @@ const adminNavItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/matches", label: "Matches", icon: Calendar },
   { href: "/admin/live", label: "Live Scoring", icon: Wifi },
+  { href: "/admin/scout", label: "COURT Scout", icon: Activity },
   { href: "/admin/teams", label: "Teams", icon: Shield },
   { href: "/admin/players", label: "Players", icon: Users },
   { href: "/admin/tournaments", label: "Tournaments", icon: Trophy },

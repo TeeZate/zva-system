@@ -14,6 +14,7 @@ import type { AdminUser } from "@/lib/types";
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
   team_admin: "Team Admin",
+  statistician: "Statistician",
 };
 
 function timeAgo(dateStr: string) {
@@ -132,6 +133,7 @@ export default function AdminsClient({
                     className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-zva-green appearance-none"
                   >
                     <option value="team_admin">Team Admin</option>
+                    <option value="statistician">Statistician (COURT Scout)</option>
                     <option value="super_admin">Super Admin</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
@@ -224,6 +226,8 @@ export default function AdminsClient({
                         <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                           admin.role === "super_admin"
                             ? "bg-zva-gold/20 text-amber-400"
+                            : admin.role === "statistician"
+                            ? "bg-purple-500/15 text-purple-400"
                             : "bg-blue-500/10 text-blue-400"
                         }`}>
                           {ROLE_LABELS[admin.role] ?? admin.role}

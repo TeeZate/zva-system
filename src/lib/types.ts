@@ -150,7 +150,7 @@ export interface Official {
   province: string | null;
 }
 
-export type AdminRole = "super_admin" | "team_admin";
+export type AdminRole = "super_admin" | "team_admin" | "statistician";
 export type O2Status = "pending" | "approved" | "rejected";
 export type SystemEventSeverity = "info" | "warning" | "error" | "critical";
 
