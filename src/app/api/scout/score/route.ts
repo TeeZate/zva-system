@@ -12,6 +12,8 @@ interface ScorePayload {
   home_sets?: number;
   away_sets?: number;
   set_ended?: { set: number; home: number; away: number };
+  match_complete?: boolean;
+  winner?: "home" | "away";
 }
 
 export async function POST(req: NextRequest) {
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { match_id, home_score, away_score, current_set, home_sets, away_sets, set_ended } = body;
+  const { match_id, home_score, away_score, current_set, home_sets, away_sets, set_ended, match_complete } = body;
 
   if (!match_id) {
     return NextResponse.json({ error: "match_id required" }, { status: 400 });
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
     home_score,
     away_score,
     current_set,
-    status: "live",
+    status: match_complete ? "finished" : "live",
   };
   if (home_sets !== undefined) update.home_sets = home_sets;
   if (away_sets !== undefined) update.away_sets = away_sets;

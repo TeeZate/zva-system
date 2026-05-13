@@ -825,6 +825,52 @@ body {
   color: var(--muted); font-size: 24px; cursor: pointer;
   margin-top: -4px; margin-right: -4px;
 }
+
+/* End Match (early) button */
+.btn-end-match {
+  background: rgba(255,80,80,0.12);
+  color: #ff6666;
+  border: 1px solid rgba(255,80,80,0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-end-match:hover { background: rgba(255,80,80,0.22); }
+
+/* Record page locked state when match is complete */
+.record-locked .score-btn,
+.record-locked #btnEndSet,
+.record-locked #btnUndo,
+.record-locked #btnEndMatch,
+.record-locked .action-btn,
+.record-locked .outcome-btn,
+.record-locked #logEventBtn {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+}
+.match-complete-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(255,224,51,0.12), rgba(0,255,136,0.08));
+  border: 1px solid rgba(255,224,51,0.35);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--volt);
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -943,8 +989,9 @@ body {
 
         <!-- Set / undo controls -->
         <div class="set-controls">
-          <button class="btn-end-set" onclick="endSet()">END SET</button>
-          <button class="btn-undo" onclick="undoLastEvent()">↩ UNDO</button>
+          <button class="btn-end-set" id="btnEndSet" onclick="endSet()">END SET</button>
+          <button class="btn-undo" id="btnUndo" onclick="undoLastEvent()">↩ UNDO</button>
+          <button class="btn-end-match" id="btnEndMatch" onclick="endMatchEarly()" title="End match early (forfeit / retirement)">END MATCH</button>
         </div>
 
         <!-- Rotation & Substitution controls -->
@@ -1050,6 +1097,19 @@ body {
     <div id="modalBody" style="color:var(--dim);font-size:14px;margin-bottom:20px"></div>
     <button class="btn-primary" id="modalConfirm">CONFIRM</button>
     <button class="btn-secondary" onclick="closeModal()">CANCEL</button>
+  </div>
+</div>
+
+<!-- MATCH COMPLETE OVERLAY -->
+<div class="modal-overlay" id="matchCompleteOverlay" style="z-index:200">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:48px;margin-bottom:8px">🏆</div>
+    <div class="modal-title" id="matchCompleteTitle" style="font-size:22px;letter-spacing:0.15em">MATCH COMPLETE</div>
+    <div id="matchCompleteWinner" style="font-size:15px;color:var(--volt);font-weight:800;margin:8px 0 4px;letter-spacing:0.05em"></div>
+    <div id="matchCompleteSetsScore" style="font-size:36px;font-weight:900;color:#fff;letter-spacing:0.08em;margin:8px 0"></div>
+    <div id="matchCompleteSetBreakdown" style="font-size:12px;color:var(--muted);margin-bottom:20px;letter-spacing:0.05em"></div>
+    <button class="btn-primary" onclick="gotoLogFromComplete()" style="margin-bottom:10px">📊 VIEW STATS</button>
+    <button class="btn-secondary" onclick="gotoNewMatch()">+ NEW MATCH</button>
   </div>
 </div>
 
@@ -1347,6 +1407,17 @@ function showTabDirect(name) {
 // ════════════════════════════════════════════════
 function initRecordPage() {
   if (!currentMatch) return;
+
+  // If resuming a finished match, lock the page and show result
+  unlockRecordPage(); // reset first in case switching between matches
+  if (currentMatch.status === 'complete') {
+    updateScoreboard();
+    buildRotationButtons();
+    buildPlayerChips();
+    buildActionGrid();
+    lockRecordPage();
+    return;
+  }
   homeRotation = 1;
   awayRotation = 1;
   updateScoreboard();
@@ -1711,9 +1782,9 @@ async function endSet() {
         currentMatch.status = 'complete';
         currentMatch.endedAt = new Date().toISOString();
         await dbPut('matches', currentMatch);
-        console.log('endSet: Calling updateScoreboard after match complete');
-        updateScoreboard(); // Update UI after DB save
-        toast('🎉 Match complete!');
+        updateScoreboard();
+        lockRecordPage();
+        showMatchCompleteOverlay();
       } else {
         console.log('endSet: Moving to next set');
         currentMatch.currentSet++;
@@ -1724,6 +1795,105 @@ async function endSet() {
         updateScoreboard(); // Update UI after DB save - this will reset scores and show set history
         toast(`Set ${currentMatch.currentSet - 1} ended. Set ${currentMatch.currentSet} starting.`);
       }
+    }
+  );
+}
+
+// ── MATCH COMPLETE ──
+function showMatchCompleteOverlay() {
+  if (!currentMatch) return;
+
+  const winner = currentMatch.homeSets > currentMatch.awaySets
+    ? currentMatch.homeTeam : currentMatch.awayTeam;
+
+  document.getElementById('matchCompleteTitle').textContent = 'MATCH COMPLETE';
+  document.getElementById('matchCompleteWinner').textContent = `🏆 ${winner.toUpperCase()} WIN`;
+  document.getElementById('matchCompleteSetsScore').textContent =
+    `${currentMatch.homeSets} – ${currentMatch.awaySets}`;
+
+  const breakdown = currentMatch.setHistory
+    .map(s => `Set ${s.set}: ${s.homeScore}–${s.awayScore}`)
+    .join('   ·   ');
+  document.getElementById('matchCompleteSetBreakdown').textContent = breakdown;
+
+  document.getElementById('matchCompleteOverlay').classList.add('open');
+}
+
+function lockRecordPage() {
+  document.getElementById('page-record').classList.add('record-locked');
+
+  // Replace set-controls with a "match complete" banner
+  const setControls = document.querySelector('.set-controls');
+  if (setControls && !document.getElementById('matchCompleteBanner')) {
+    const banner = document.createElement('div');
+    banner.id = 'matchCompleteBanner';
+    banner.className = 'match-complete-banner';
+    banner.onclick = showMatchCompleteOverlay;
+    banner.innerHTML = '🏆 MATCH COMPLETE — tap to view result';
+    setControls.parentNode.insertBefore(banner, setControls);
+    setControls.style.display = 'none';
+  }
+}
+
+function unlockRecordPage() {
+  document.getElementById('page-record').classList.remove('record-locked');
+  const banner = document.getElementById('matchCompleteBanner');
+  if (banner) banner.remove();
+  const setControls = document.querySelector('.set-controls');
+  if (setControls) setControls.style.display = '';
+}
+
+function gotoLogFromComplete() {
+  document.getElementById('matchCompleteOverlay').classList.remove('open');
+  showTabDirect('log');
+  refreshLog();
+}
+
+function gotoNewMatch() {
+  document.getElementById('matchCompleteOverlay').classList.remove('open');
+  showTabDirect('setup');
+}
+
+// ── END MATCH EARLY (forfeit / retirement) ──
+function endMatchEarly() {
+  if (!currentMatch) return;
+  if (currentMatch.status === 'complete') {
+    showMatchCompleteOverlay();
+    return;
+  }
+
+  const homeAhead = currentMatch.homeSets > currentMatch.awaySets;
+  const awayAhead = currentMatch.awaySets > currentMatch.homeSets;
+  const leadText = homeAhead
+    ? `${currentMatch.homeTeam} leads ${currentMatch.homeSets}–${currentMatch.awaySets}`
+    : awayAhead
+    ? `${currentMatch.awayTeam} leads ${currentMatch.awaySets}–${currentMatch.homeSets}`
+    : `Tied ${currentMatch.homeSets}–${currentMatch.awaySets} in sets`;
+
+  showModal(
+    'End Match Early?',
+    `Use this for forfeit or retirement only.\n${leadText} (Set ${currentMatch.currentSet} in progress).`,
+    async () => {
+      // Save current set result if any points played
+      if (currentMatch.homeScore > 0 || currentMatch.awayScore > 0) {
+        const setWinner = currentMatch.homeScore >= currentMatch.awayScore ? 'home' : 'away';
+        currentMatch.setHistory.push({
+          set: currentMatch.currentSet,
+          homeScore: currentMatch.homeScore,
+          awayScore: currentMatch.awayScore,
+          winner: setWinner,
+          incomplete: true,
+        });
+        if (setWinner === 'home') currentMatch.homeSets++;
+        else currentMatch.awaySets++;
+      }
+      currentMatch.status = 'complete';
+      currentMatch.endedAt = new Date().toISOString();
+      currentMatch.endedEarly = true;
+      await dbPut('matches', currentMatch);
+      updateScoreboard();
+      lockRecordPage();
+      showMatchCompleteOverlay();
     }
   );
 }
@@ -2418,6 +2588,24 @@ const optimizeScrolling = () => {
       score_away:   currentMatch.awayScore,
       ts:           new Date().toISOString(),
     });
+  };
+
+  // ── Patch lockRecordPage → notify ZVA of match completion ───────────
+  const _origLockRecordPage = lockRecordPage;
+  window.lockRecordPage = function() {
+    _origLockRecordPage.call(this);
+    if (!currentMatch) return;
+    zvaPost('/api/scout/score', {
+      match_id:       MATCH_ID,
+      home_score:     currentMatch.homeScore,
+      away_score:     currentMatch.awayScore,
+      current_set:    currentMatch.currentSet,
+      home_sets:      currentMatch.homeSets,
+      away_sets:      currentMatch.awaySets,
+      match_complete: true,
+      winner: currentMatch.homeSets > currentMatch.awaySets ? 'home' : 'away',
+    });
+    setBadge('ZVA FINISHED', '#ffd700');
   };
 
   // ── Patch showModal → capture set-end confirmation ───────────────────
