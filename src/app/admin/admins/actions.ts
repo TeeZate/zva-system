@@ -19,24 +19,35 @@ export async function listAdminUsers(): Promise<AdminUser[]> {
 }
 
 export async function createTeamAdmin(formData: FormData): Promise<{ error: string | null }> {
-  const email = (formData.get("email") as string).trim();
-  const teamId = formData.get("team_id") as string;
-  const role = (formData.get("role") as string) || "team_admin";
+  const email    = (formData.get("email") as string).trim();
+  const teamId   = formData.get("team_id") as string;
+  const role     = (formData.get("role") as string) || "team_admin";
+  const password = (formData.get("password") as string | null)?.trim() || null;
 
   if (!email) return { error: "Email is required" };
 
   const db = createAdminClient();
+  let userId: string;
 
-  // Invite user via Supabase Auth
-  const { data: inviteData, error: inviteError } = await db.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/login`,
-  });
+  if (password) {
+    // Create account directly with a set password — no email invite needed
+    if (password.length < 8) return { error: "Password must be at least 8 characters" };
 
-  if (inviteError) {
-    return { error: inviteError.message };
+    const { data, error } = await db.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // mark email as verified immediately
+    });
+    if (error) return { error: error.message };
+    userId = data.user.id;
+  } else {
+    // Send email invite — user sets their own password via the link
+    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/login`,
+    });
+    if (error) return { error: error.message };
+    userId = data.user.id;
   }
-
-  const userId = inviteData.user.id;
 
   // Upsert role record
   const { error: roleError } = await db.from("admin_users").upsert({

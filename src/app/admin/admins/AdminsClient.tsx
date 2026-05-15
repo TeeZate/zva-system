@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Users, Plus, Mail, Shield, ShieldOff, KeyRound,
-  CheckCircle2, XCircle, ChevronDown, X
+  ChevronDown, X, Eye, EyeOff, Lock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { createTeamAdmin, toggleAdminActive, resetAdminPassword } from "./actions";
 import type { AdminUser } from "@/lib/types";
 
@@ -38,23 +37,36 @@ export default function AdminsClient({
   const [showCreate, setShowCreate] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("team_admin");
-  const [teamId, setTeamId] = useState("");
+  const [email, setEmail]       = useState("");
+  const [role, setRole]         = useState("team_admin");
+  const [teamId, setTeamId]     = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw]     = useState(false);
+  const [usePassword, setUsePassword] = useState(true); // default: set password directly
+
+  function resetForm() {
+    setEmail(""); setRole("team_admin"); setTeamId("");
+    setPassword(""); setShowPw(false); setUsePassword(true);
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (usePassword && password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
     const fd = new FormData();
     fd.append("email", email);
     fd.append("role", role);
     fd.append("team_id", teamId);
+    if (usePassword) fd.append("password", password);
     startTransition(async () => {
       const { error } = await createTeamAdmin(fd);
       if (error) {
         toast.error(error);
       } else {
-        toast.success(`Invite sent to ${email}`);
-        setEmail(""); setRole("team_admin"); setTeamId("");
+        toast.success(usePassword ? `Account created for ${email}` : `Invite sent to ${email}`);
+        resetForm();
         setShowCreate(false);
         router.refresh();
       }
@@ -108,6 +120,30 @@ export default function AdminsClient({
               </button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
+
+              {/* Method toggle */}
+              <div className="flex rounded-xl overflow-hidden border border-zinc-700 text-sm font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setUsePassword(true)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors ${
+                    usePassword ? "bg-zva-green text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <Lock size={13} /> Set Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUsePassword(false)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors ${
+                    !usePassword ? "bg-zva-green text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <Mail size={13} /> Email Invite
+                </button>
+              </div>
+
+              {/* Email */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-zinc-300">Email Address</label>
                 <div className="relative">
@@ -117,13 +153,43 @@ export default function AdminsClient({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@team.co.zw"
+                    placeholder="admin@zva.co.zw"
                     className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-zva-green placeholder-zinc-600"
                   />
                 </div>
-                <p className="text-xs text-zinc-600">An invitation email will be sent so they can set their password.</p>
               </div>
 
+              {/* Password field — only shown in Set Password mode */}
+              {usePassword && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-zinc-300">Password</label>
+                  <div className="relative">
+                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input
+                      type={showPw ? "text" : "password"}
+                      required={usePassword}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-lg pl-9 pr-10 py-2.5 text-sm focus:outline-none focus:border-zva-green placeholder-zinc-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                    >
+                      {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-zinc-600">Account is created immediately — share credentials securely.</p>
+                </div>
+              )}
+
+              {!usePassword && (
+                <p className="text-xs text-zinc-600 -mt-1">An invitation email will be sent so they can set their own password.</p>
+              )}
+
+              {/* Role */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-zinc-300">Role</label>
                 <div className="relative">
@@ -140,6 +206,7 @@ export default function AdminsClient({
                 </div>
               </div>
 
+              {/* Team selector */}
               {role === "team_admin" && (
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-zinc-300">Assigned Team</label>
@@ -160,10 +227,11 @@ export default function AdminsClient({
                 </div>
               )}
 
+              {/* Actions */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreate(false)}
+                  onClick={() => { resetForm(); setShowCreate(false); }}
                   className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium py-2.5 rounded-xl transition-colors"
                 >
                   Cancel
@@ -175,10 +243,12 @@ export default function AdminsClient({
                 >
                   {isPending ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : usePassword ? (
+                    <Lock size={14} />
                   ) : (
                     <Mail size={14} />
                   )}
-                  Send Invite
+                  {usePassword ? "Create Account" : "Send Invite"}
                 </button>
               </div>
             </form>
