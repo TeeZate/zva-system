@@ -82,6 +82,23 @@ export async function resetAdminPassword(userId: string): Promise<{ error: strin
   return { error: error?.message ?? null };
 }
 
+export async function deleteAdmin(userId: string): Promise<{ error: string | null }> {
+  const db = createAdminClient();
+
+  // Remove role record first (FK constraint)
+  const { error: rowError } = await db
+    .from("admin_users")
+    .delete()
+    .eq("user_id", userId);
+  if (rowError) return { error: rowError.message };
+
+  // Delete the auth user entirely
+  const { error: authError } = await db.auth.admin.deleteUser(userId);
+  if (authError) return { error: authError.message };
+
+  return { error: null };
+}
+
 export async function listTeams() {
   const db = createAdminClient();
   const { data } = await db.from("teams").select("id, name, short_name").order("name");

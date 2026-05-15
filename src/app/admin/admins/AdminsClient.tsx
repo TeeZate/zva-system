@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Users, Plus, Mail, Shield, ShieldOff, KeyRound,
-  ChevronDown, X, Eye, EyeOff, Lock
+  ChevronDown, X, Eye, EyeOff, Lock, Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createTeamAdmin, toggleAdminActive, resetAdminPassword } from "./actions";
+import { createTeamAdmin, toggleAdminActive, resetAdminPassword, deleteAdmin } from "./actions";
 import type { AdminUser } from "@/lib/types";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -35,6 +35,7 @@ export default function AdminsClient({
 }) {
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ userId: string; email: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [email, setEmail]       = useState("");
@@ -92,6 +93,18 @@ export default function AdminsClient({
     });
   }
 
+  async function handleDelete(userId: string) {
+    startTransition(async () => {
+      const { error } = await deleteAdmin(userId);
+      if (error) toast.error(error);
+      else {
+        toast.success("Admin account permanently deleted");
+        setConfirmDelete(null);
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -108,6 +121,48 @@ export default function AdminsClient({
           Add Admin
         </button>
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-zinc-900 border border-red-900/50 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-white">Delete Admin Account?</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">This cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-400 mb-6">
+              This will permanently delete <span className="text-white font-semibold">{confirmDelete.email}</span> from the system.
+              They will lose all access immediately.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium py-2.5 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete.userId)}
+                disabled={isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create modal */}
       {showCreate && (
@@ -318,7 +373,7 @@ export default function AdminsClient({
                         onClick={() => handleReset(admin.user_id, admin.email ?? "")}
                         disabled={isPending || !admin.is_active}
                         className="p-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 text-zinc-400 hover:text-white transition-colors"
-                        title="Send password reset"
+                        title="Send password reset email"
                       >
                         <KeyRound size={14} />
                       </button>
@@ -327,12 +382,20 @@ export default function AdminsClient({
                         disabled={isPending}
                         className={`p-2 rounded-xl transition-colors ${
                           admin.is_active
-                            ? "bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                            ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400"
                             : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400"
                         }`}
                         title={admin.is_active ? "Disable account" : "Enable account"}
                       >
                         {admin.is_active ? <ShieldOff size={14} /> : <Shield size={14} />}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete({ userId: admin.user_id, email: admin.email ?? "this user" })}
+                        disabled={isPending}
+                        className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
+                        title="Delete account permanently"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
